@@ -99,7 +99,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>G:\CH-HCNetSDKV6.1.9.48\resources</AdditionalLibraryDirectories>
-      <AdditionalDependencies>HCNetSDK.lib;PlayM4.lib</AdditionalDependencies>
+      <AdditionalDependencies>HCNetSDK.lib;PlayM4.lib;PlayCtrl.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

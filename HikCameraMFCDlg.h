@@ -31,9 +31,16 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+	afx_msg void OnBnClickedStartPreview();  // "开始预览"按钮的点击事件处理函数
+	afx_msg void OnBnClickedBtnCapture(); // 抓图
 	DECLARE_MESSAGE_MAP()
 
 // 其他代码...
 private:
-	LONG m_lUserID; // 设备登录句柄
+	int m_nPort;  // 播放端口成员变量，替代全局变量
+	LONG m_lUserID;  // 已有的设备登录句柄
+	LONG m_lRealHandle;  // 已有的预览句柄
+
+public:
+	afx_msg void OnBnClickedNo();
 };

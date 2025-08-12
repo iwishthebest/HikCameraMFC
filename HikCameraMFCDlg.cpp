@@ -9,9 +9,21 @@
 #include "afxdialogex.h"
 #include <string>
 
+#include "plaympeg4.h" 
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
+//在CHikCameraMFCDlg.cpp的构造函数中初始化（可选，建议初始化）：
+CHikCameraMFCDlg::CHikCameraMFCDlg(CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_HIKCAMERAMFC_DIALOG, pParent)
+	, m_lUserID(-1)
+	, m_lRealHandle(-1)
+	, m_nPort(-1)  // 初始化播放端口为无效值
+{
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+}
 
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
@@ -44,6 +56,8 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+	
+	
 END_MESSAGE_MAP()
 
 
@@ -66,6 +80,11 @@ BEGIN_MESSAGE_MAP(CHikCameraMFCDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+
+	ON_BN_CLICKED(IDNO, &CHikCameraMFCDlg::OnBnClickedNo)
+	// 添加以下行：关联按钮ID和处理函数
+	ON_BN_CLICKED(IDC_BTN_START_PREVIEW, &CHikCameraMFCDlg::OnBnClickedStartPreview)
+	ON_BN_CLICKED(IDC_BTN_CAPTURE, &CHikCameraMFCDlg::OnBnClickedBtnCapture) // 自动生成的映射
 END_MESSAGE_MAP()
 
 
@@ -93,23 +112,35 @@ BOOL CHikCameraMFCDlg::OnInitDialog()
 	GetDlgItemText(IDC_EDIT_PASSWORD, strPwd);
 
 	// 转换为char*类型
-	char ipBuf[16] = { 0 };
-	char userBuf[32] = { 0 };
-	char pwdBuf[32] = { 0 };
-	_tcscpy_s(ipBuf, strIP.GetLength() + 1, strIP);
-	_tcscpy_s(userBuf, strUser.GetLength() + 1, strUser);
-	_tcscpy_s(pwdBuf, strPwd.GetLength() + 1, strPwd);
+	char  ipBuf[16] = { 0 };
+	char  userBuf[32] = { 0 };
+	char  pwdBuf[32] = { 0 };
 	int port = _ttoi(strPort);
 
-	NET_DVR_DEVICEINFO_V30 deviceInfo;
+	// 使用 WideCharToMultiByte 转换宽字符到窄字符
+	// 转换 IP
+	WideCharToMultiByte(CP_ACP, 0, strIP, -1, ipBuf, sizeof(ipBuf), NULL, NULL);
+	// 转换用户名
+	WideCharToMultiByte(CP_ACP, 0, strUser, -1, userBuf, sizeof(userBuf), NULL, NULL);
+	// 转换密码
+	WideCharToMultiByte(CP_ACP, 0, strPwd, -1, pwdBuf, sizeof(pwdBuf), NULL, NULL);
+
+	// 声明设备信息结构体（需包含海康SDK头文件）
+	NET_DVR_DEVICEINFO_V30 deviceInfo = { 0 };
+
+	// 登录相机（此时参数类型匹配）
 	m_lUserID = NET_DVR_Login_V30(ipBuf, port, userBuf, pwdBuf, &deviceInfo);
-	if (m_lUserID < 0)
-	{
-		AfxMessageBox(_T("登录失败！错误码：") + CString(std::to_string(NET_DVR_GetLastError()).c_str()));
-		NET_DVR_Cleanup();
-		return FALSE;
+
+	// 检查登录结果
+	if (m_lUserID < 0) {
+		DWORD err = NET_DVR_GetLastError();
+		CString strErr;
+		strErr.Format(_T("登录失败，错误码：%d"), err);
+		AfxMessageBox(strErr);
 	}
-	return TRUE;
+	else {
+		AfxMessageBox(_T("登录成功！"));
+	}
 
 	// 将“关于...”菜单项添加到系统菜单中。
 
@@ -196,26 +227,26 @@ void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer
 	if (dwDataType == NET_DVR_SYSHEAD)
 	{
 		// 初始化播放库相关操作，获取播放端口等
-		// 假设全局变量g_nPort存储播放端口号
-		if (!PlayM4_GetPort(&g_nPort))
+		// 假设私有成员m_nPort存储播放端口号
+		if (!PlayM4_GetPort(m_nPort))
 		{
 			return;
 		}
-		if (!PlayM4_SetStreamOpenMode(g_nPort, STREAME_REALTIME))
+		if (!PlayM4_SetStreamOpenMode(m_nPort, STREAME_REALTIME))
 		{
 			return;
 		}
-		if (!PlayM4_OpenStream(g_nPort, pBuffer, dwBufSize, 1024 * 1024))
+		if (!PlayM4_OpenStream(m_nPort, pBuffer, dwBufSize, 1024 * 1024))
 		{
 			return;
 		}
 		// 获取对话框中用于显示视频的Static Text控件句柄
 		CWnd* pWnd = ((CHikCameraMFCDlg*)pUser)->GetDlgItem(IDC_VIDEO_DISPLAY);
-		if (!PlayM4_SetDisplayBuf(g_nPort, 15))
+		if (!PlayM4_SetDisplayBuf(m_nPort, 15))
 		{
 			return;
 		}
-		if (!PlayM4_Play(g_nPort, pWnd->m_hWnd))
+		if (!PlayM4_Play(m_nPort, pWnd->m_hWnd))
 		{
 			return;
 		}
@@ -223,7 +254,7 @@ void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer
 	else if (dwDataType == NET_DVR_STREAMDATA)
 	{
 		// 输入视频流数据到播放库进行解码播放
-		PlayM4_InputData(g_nPort, pBuffer, dwBufSize);
+		PlayM4_InputData(m_nPort, pBuffer, dwBufSize);
 	}
 }
 
@@ -235,16 +266,26 @@ void CHikCameraMFCDlg::OnBnClickedStartPreview()
 		AfxMessageBox(_T("请先登录相机！"));
 		return;
 	}
-	NET_DVR_PREVIEWINFO previewInfo = { 0 };
-	previewInfo.hPlayWnd = NULL;  // 不使用SDK自带窗口，由播放库处理显示
-	previewInfo.lChannel = 1;     // 通道号，根据实际情况调整
-	previewInfo.dwStreamType = 0; // 主码流
-	previewInfo.dwLinkMode = 0;   // TCP连接
 
+	// 配置预览参数
+	NET_DVR_PREVIEWINFO previewInfo = { 0 };
+	previewInfo.hPlayWnd = NULL;  // 不使用SDK自带窗口，由播放库处理
+	previewInfo.lChannel = 1;     // 通道号（根据实际相机通道调整）
+	previewInfo.dwStreamType = 0; // 0-主码流，1-子码流
+	previewInfo.dwLinkMode = 0;   // 0-TCP方式，1-UDP方式
+
+	// 启动预览，传入回调函数和当前窗口指针
 	m_lRealHandle = NET_DVR_RealPlay_V30(m_lUserID, &previewInfo, RealDataCallBack, this);
 	if (m_lRealHandle < 0)
 	{
-		AfxMessageBox(_T("预览失败！错误码：") + CString(std::to_string(NET_DVR_GetLastError()).c_str()));
+		DWORD err = NET_DVR_GetLastError();
+		CString strErr;
+		strErr.Format(_T("预览失败！错误码：%d"), err);
+		AfxMessageBox(strErr);
+	}
+	else
+	{
+		AfxMessageBox(_T("开始预览成功！"));
 	}
 }
 
@@ -290,11 +331,16 @@ void CHikCameraMFCDlg::OnCancel()
 	// 清理SDK
 	NET_DVR_Cleanup();
 	// 关闭播放库端口（如果使用了播放库）
-	if (g_nPort >= 0)
+	if (m_nPort >= 0)
 	{
-		PlayM4_Stop(g_nPort);
-		PlayM4_CloseStream(g_nPort);
-		PlayM4_FreePort(g_nPort);
+		PlayM4_Stop(m_nPort);
+		PlayM4_CloseStream(m_nPort);
+		PlayM4_FreePort(m_nPort);
 	}
 	CDialogEx::OnCancel();
+}
+
+void CHikCameraMFCDlg::OnBnClickedNo()
+{
+	// TODO: 在此添加控件通知处理程序代码
 }
