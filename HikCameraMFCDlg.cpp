@@ -224,29 +224,33 @@ HCURSOR CHikCameraMFCDlg::OnQueryDragIcon()
 //在HikCameraMFCDlg.cpp文件中添加预览回调函数，用于处理接收到的视频数据：
 void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer, DWORD dwBufSize, void* pUser)
 {
+	// 将pUser转换为对话框指针（关键修正）
+	CHikCameraMFCDlg* pDlg = (CHikCameraMFCDlg*)pUser;
+	if (pDlg == nullptr) return;
+
 	if (dwDataType == NET_DVR_SYSHEAD)
 	{
 		// 初始化播放库相关操作，获取播放端口等
-		// 假设私有成员m_nPort存储播放端口号
-		if (!PlayM4_GetPort(m_nPort))
+		// 通过对话框指针访问m_nPort成员变量
+		if (!PlayM4_GetPort(pDlg->GetPortPtr()))
 		{
 			return;
 		}
-		if (!PlayM4_SetStreamOpenMode(m_nPort, STREAME_REALTIME))
+		if (!PlayM4_SetStreamOpenMode(pDlg->GetPort(), STREAME_REALTIME))
 		{
 			return;
 		}
-		if (!PlayM4_OpenStream(m_nPort, pBuffer, dwBufSize, 1024 * 1024))
+		if (!PlayM4_OpenStream(pDlg->GetPort(), pBuffer, dwBufSize, 1024 * 1024))
 		{
 			return;
 		}
 		// 获取对话框中用于显示视频的Static Text控件句柄
 		CWnd* pWnd = ((CHikCameraMFCDlg*)pUser)->GetDlgItem(IDC_VIDEO_DISPLAY);
-		if (!PlayM4_SetDisplayBuf(m_nPort, 15))
+		if (!PlayM4_SetDisplayBuf(pDlg->GetPort(), 15))
 		{
 			return;
 		}
-		if (!PlayM4_Play(m_nPort, pWnd->m_hWnd))
+		if (!PlayM4_Play(pDlg->GetPort(), pWnd->m_hWnd))
 		{
 			return;
 		}
@@ -254,7 +258,7 @@ void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer
 	else if (dwDataType == NET_DVR_STREAMDATA)
 	{
 		// 输入视频流数据到播放库进行解码播放
-		PlayM4_InputData(m_nPort, pBuffer, dwBufSize);
+		PlayM4_InputData(pDlg->GetPort(), pBuffer, dwBufSize);
 	}
 }
 
@@ -290,7 +294,7 @@ void CHikCameraMFCDlg::OnBnClickedStartPreview()
 }
 
 //添加 “抓图” 按钮点击事件处理函数，在HikCameraMFCDlg.cpp中实现：
-void CHikCameraMFCDlg::OnBnClickedCaptureImage()
+void CHikCameraMFCDlg::OnBnClickedBtnCapture()
 {
 	if (m_lUserID < 0)
 	{
@@ -301,10 +305,12 @@ void CHikCameraMFCDlg::OnBnClickedCaptureImage()
 	jpegPara.wPicSize = 0;  // 图片尺寸，0表示默认
 	jpegPara.wPicQuality = 0; // 图片质量，0表示最好
 
-	CString strSavePath = _T("D:\\captured_image.jpg"); // 抓图保存路径，可自定义
-	char savePathBuf[MAX_PATH] = { 0 };
-	_tcscpy_s(savePathBuf, strSavePath.GetLength() + 1, strSavePath);
+	CString strSavePath = _T("G:\\captured_image.jpg"); // 抓图保存路径，可自定义
+	char   savePathBuf[MAX_PATH] = { 0 };
 
+	// 将宽字符CString转换为窄字符char*（关键修正）
+	WideCharToMultiByte(CP_ACP, 0, strSavePath, -1, savePathBuf, sizeof(savePathBuf), NULL, NULL);
+	// 此时savePathBuf为char*类型，与函数参数匹配
 	if (!NET_DVR_CaptureJPEGPicture(m_lUserID, 1, &jpegPara, savePathBuf))
 	{
 		AfxMessageBox(_T("抓图失败！错误码：") + CString(std::to_string(NET_DVR_GetLastError()).c_str()));
