@@ -9,6 +9,9 @@
 // CHikCameraMFCDlg 对话框
 class CHikCameraMFCDlg : public CDialogEx
 {
+	// 声明回调函数为友元（关键修改）
+	friend void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer, DWORD dwBufSize, void* pUser);
+
 // 构造
 public:
 	CHikCameraMFCDlg(CWnd* pParent = nullptr);	// 标准构造函数
@@ -46,7 +49,7 @@ public:
 	afx_msg void OnBnClickedNo();
 	// 添加公共接口：获取/设置播放端口（仅暴露必要操作）
 	int GetPort() const { return m_nPort; }         // 只读访问
-	int* GetPortPtr() { return &m_nPort; }          // 提供指针（供PlayM4_GetPort修改）
+	LONG* GetPortPtr() { return &m_nPort; }          // 提供指针（供PlayM4_GetPort修改）
 	void SetPort(int port) { m_nPort = port; }      // 写访问（可选，按需添加）
 
 };

@@ -14,16 +14,10 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+#undef ZOOM_IN
+#undef ZOOM_OUT
+#include "HCNetSDK.h"  // 海康SDK头文件
 
-//在CHikCameraMFCDlg.cpp的构造函数中初始化（可选，建议初始化）：
-CHikCameraMFCDlg::CHikCameraMFCDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_HIKCAMERAMFC_DIALOG, pParent)
-	, m_lUserID(-1)
-	, m_lRealHandle(-1)
-	, m_nPort(-1)  // 初始化播放端口为无效值
-{
-	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-}
 
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
@@ -63,13 +57,16 @@ END_MESSAGE_MAP()
 
 // CHikCameraMFCDlg 对话框
 
-
-
+//在CHikCameraMFCDlg.cpp的构造函数中初始化（可选，建议初始化）：
 CHikCameraMFCDlg::CHikCameraMFCDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_HIKCAMERAMFC_DIALOG, pParent)
+	, m_lUserID(-1)
+	, m_lRealHandle(-1)
+	, m_nPort(-1)  // 初始化播放端口为无效值
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
+
 
 void CHikCameraMFCDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -232,7 +229,7 @@ void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer
 	{
 		// 初始化播放库相关操作，获取播放端口等
 		// 通过对话框指针访问m_nPort成员变量
-		if (!PlayM4_GetPort(pDlg->GetPortPtr()))
+		if (!PlayM4_GetPort(&pDlg->m_nPort))
 		{
 			return;
 		}
@@ -271,25 +268,32 @@ void CHikCameraMFCDlg::OnBnClickedStartPreview()
 		return;
 	}
 
-	// 配置预览参数
-	NET_DVR_PREVIEWINFO previewInfo = { 0 };
-	previewInfo.hPlayWnd = NULL;  // 不使用SDK自带窗口，由播放库处理
-	previewInfo.lChannel = 1;     // 通道号（根据实际相机通道调整）
-	previewInfo.dwStreamType = 0; // 0-主码流，1-子码流
-	previewInfo.dwLinkMode = 0;   // 0-TCP方式，1-UDP方式
+	// 声明并初始化 NET_DVR_CLIENTINFO 结构体（与函数参数匹配）
+	NET_DVR_CLIENTINFO clientInfo = { 0 };
+	clientInfo.lChannel = 1;              // 预览通道号（根据相机实际通道调整，通常从1开始）
+	clientInfo.hPlayWnd = NULL;           // 设为NULL表示通过回调函数处理视频流（不使用SDK自带窗口）
+	clientInfo.lLinkMode = 0;             // 连接方式：0-TCP（推荐，稳定性高），1-UDP（效率高但可能丢包）
 
-	// 启动预览，传入回调函数和当前窗口指针
-	m_lRealHandle = NET_DVR_RealPlay_V30(m_lUserID, &previewInfo, RealDataCallBack, this);
+	// 调用 NET_DVR_RealPlay_V30 函数，参数类型完全匹配
+	m_lRealHandle = NET_DVR_RealPlay_V30(
+		m_lUserID,                   // 登录句柄（已通过 NET_DVR_Login_V30 获取）
+		&clientInfo,                 // 结构体指针（NET_DVR_CLIENTINFO* 类型，与函数要求一致）
+		RealDataCallBack,            // 视频流回调函数（处理实时数据）
+		this,                        // 用户数据（传递当前对话框指针，供回调函数访问成员）
+		TRUE                         // 阻塞取流模式（TRUE表示阻塞，FALSE表示非阻塞）
+	);
+
+	// 检查预览是否成功
 	if (m_lRealHandle < 0)
 	{
-		DWORD err = NET_DVR_GetLastError();
+		DWORD errCode = NET_DVR_GetLastError();
 		CString strErr;
-		strErr.Format(_T("预览失败！错误码：%d"), err);
+		strErr.Format(_T("预览启动失败！错误码：%d"), errCode);
 		AfxMessageBox(strErr);
 	}
 	else
 	{
-		AfxMessageBox(_T("开始预览成功！"));
+		AfxMessageBox(_T("预览启动成功！"));
 	}
 }
 
