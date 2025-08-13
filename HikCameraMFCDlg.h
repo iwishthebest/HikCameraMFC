@@ -47,9 +47,9 @@ private:
 
 public:
 	afx_msg void OnBnClickedNo();
-	// 添加公共接口：获取/设置播放端口（仅暴露必要操作）
-	int GetPort() const { return m_nPort; }         // 只读访问
-	LONG* GetPortPtr() { return &m_nPort; }          // 提供指针（供PlayM4_GetPort修改）
-	void SetPort(int port) { m_nPort = port; }      // 写访问（可选，按需添加）
+	//// 添加公共接口：获取/设置播放端口（仅暴露必要操作）
+	//int GetPort() const { return m_nPort; }         // 只读访问
+	//LONG* GetPortPtr() { return &m_nPort; }          // 提供指针（供PlayM4_GetPort修改）
+	//void SetPort(int port) { m_nPort = port; }      // 写访问（可选，按需添加）
 
 };

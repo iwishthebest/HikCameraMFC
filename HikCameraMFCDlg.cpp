@@ -1,4 +1,10 @@
-﻿
+﻿#pragma once
+#undef ZOOM_IN
+#undef ZOOM_OUT
+#include "HCNetSDK.h"  // 海康SDK头文件
+#include "PlayM4.h"
+
+
 // HikCameraMFCDlg.cpp: 实现文件
 //
 
@@ -9,14 +15,10 @@
 #include "afxdialogex.h"
 #include <string>
 
-#include "plaympeg4.h" 
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-#undef ZOOM_IN
-#undef ZOOM_OUT
-#include "HCNetSDK.h"  // 海康SDK头文件
+
 
 
 
@@ -221,7 +223,7 @@ HCURSOR CHikCameraMFCDlg::OnQueryDragIcon()
 //在HikCameraMFCDlg.cpp文件中添加预览回调函数，用于处理接收到的视频数据：
 void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer, DWORD dwBufSize, void* pUser)
 {
-	// 将pUser转换为对话框指针（关键修正）
+	// 将pUser转换为对话框指针
 	CHikCameraMFCDlg* pDlg = (CHikCameraMFCDlg*)pUser;
 	if (pDlg == nullptr) return;
 
@@ -233,21 +235,21 @@ void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer
 		{
 			return;
 		}
-		if (!PlayM4_SetStreamOpenMode(pDlg->GetPort(), STREAME_REALTIME))
+		if (!PlayM4_SetStreamOpenMode(pDlg->m_nPort, STREAME_REALTIME))
 		{
 			return;
 		}
-		if (!PlayM4_OpenStream(pDlg->GetPort(), pBuffer, dwBufSize, 1024 * 1024))
+		if (!PlayM4_OpenStream(pDlg->m_nPort, pBuffer, dwBufSize, 1024 * 1024))
 		{
 			return;
 		}
 		// 获取对话框中用于显示视频的Static Text控件句柄
 		CWnd* pWnd = ((CHikCameraMFCDlg*)pUser)->GetDlgItem(IDC_VIDEO_DISPLAY);
-		if (!PlayM4_SetDisplayBuf(pDlg->GetPort(), 15))
+		if (!PlayM4_SetDisplayBuf(pDlg->m_nPort, 15))
 		{
 			return;
 		}
-		if (!PlayM4_Play(pDlg->GetPort(), pWnd->m_hWnd))
+		if (!PlayM4_Play(pDlg->m_nPort, pWnd->m_hWnd))
 		{
 			return;
 		}
@@ -255,7 +257,7 @@ void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer
 	else if (dwDataType == NET_DVR_STREAMDATA)
 	{
 		// 输入视频流数据到播放库进行解码播放
-		PlayM4_InputData(pDlg->GetPort(), pBuffer, dwBufSize);
+		PlayM4_InputData(pDlg->m_nPort, pBuffer, dwBufSize);
 	}
 }
 

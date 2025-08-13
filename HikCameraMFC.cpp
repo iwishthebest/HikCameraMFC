@@ -1,6 +1,9 @@
 ﻿
 // HikCameraMFC.cpp: 定义应用程序的类行为。
 //
+#undef ZOOM_IN
+#undef ZOOM_OUT
+#include "HCNetSDK.h"  // 海康SDK头文件
 
 #include "pch.h"
 #include "framework.h"
@@ -11,9 +14,7 @@
 #define new DEBUG_NEW
 #endif
 
-#undef ZOOM_IN
-#undef ZOOM_OUT
-#include "HCNetSDK.h"  // 海康SDK头文件
+
 
 // CHikCameraMFCApp
 
