@@ -14,18 +14,22 @@
 #define IDC_VIDEO_DISPLAY               1004
 #define IDC_BTN_START_PREVIEW           1006
 #define IDC_BTN_CAPTURE                 1007
+#define IDC_STATIC1                     1009
+#define IDC_STATIC2                     1010
+#define IDC_STATIC3                     1011
+#define IDC_STATIC4                     1012
+#define IDC_BTN_LOGIN                   1013
+#define IDC_BTN_LOGIN2                  1014
+#define IDC_BTN_LOGOUT                  1014
+#define IDC_STATIC_STATUS               1015
 
-//IP 输入框 → IDC_EDIT_IP
-//端口输入框 → IDC_EDIT_PORT
-//用户名输入框 → IDC_EDIT_USERNAME
-//密码输入框 → IDC_EDIT_PASSWORD
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        130
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1008
+#define _APS_NEXT_CONTROL_VALUE         1016
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

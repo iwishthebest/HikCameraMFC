@@ -1,10 +1,8 @@
-﻿
-// HikCameraMFCDlg.h: 头文件
+﻿// HikCameraMFCDlg.h: 头文件
 //
 #include "HCNetSDK.h"
 
 #pragma once
-
 
 // CHikCameraMFCDlg 对话框
 class CHikCameraMFCDlg : public CDialogEx
@@ -12,20 +10,19 @@ class CHikCameraMFCDlg : public CDialogEx
 	// 声明回调函数为友元（关键修改）
 	friend void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer, DWORD dwBufSize, void* pUser);
 
-// 构造
+	// 构造
 public:
 	CHikCameraMFCDlg(CWnd* pParent = nullptr);	// 标准构造函数
 
-// 对话框数据
+	// 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_HIKCAMERAMFC_DIALOG };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
-
-// 实现
+	// 实现
 protected:
 	HICON m_hIcon;
 
@@ -39,19 +36,22 @@ protected:
 	afx_msg void OnCancel(); // 添加OnCancel声明
 	DECLARE_MESSAGE_MAP()
 
-// 其他代码...
+	// 其他代码...
 private:
 	LONG m_lPort;  // 播放端口成员变量，替代全局变量
-	LONG m_lUserID;  // 已有的设备登录句柄
-	LONG m_lRealHandle;  // 已有的预览句柄
+	// 登录句柄（海康SDK用）
+	LONG m_lUserID;          // 初始化为-1（未登录）
+	// 登录状态标识
+	bool m_bIsLoggedIn;      // 初始化为false
+	// 视频预览句柄（如果需要）
+	LONG m_lRealHandle;      // 初始化为-1
 
 public:
 	afx_msg void OnBnClickedNo();
-	//// 添加公共接口：获取/设置播放端口（仅暴露必要操作）
-	//int GetPort() const { return m_nPort; }         // 只读访问
-	//LONG* GetPortPtr() { return &m_nPort; }          // 提供指针（供PlayM4_GetPort修改）
-	//void SetPort(int port) { m_nPort = port; }      // 写访问（可选，按需添加）
-
 	afx_msg void OnEnChangeEditIp();
 	afx_msg void OnStnClickedVideoDisplay();
+	afx_msg void OnBnClickedOk();
+	afx_msg void OnBnClickedCancel();
+	afx_msg void OnBnClickedBtnLogin();
+	afx_msg void OnBnClickedBtnLogout();
 };

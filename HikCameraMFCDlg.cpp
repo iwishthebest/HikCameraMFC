@@ -54,6 +54,7 @@ CHikCameraMFCDlg::CHikCameraMFCDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_HIKCAMERAMFC_DIALOG, pParent)
 	, m_lUserID(-1)
 	, m_lRealHandle(-1)
+	, m_bIsLoggedIn(false) // 初始化未登录
 	, m_lPort(-1)  // 初始化播放端口为无效值
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -75,6 +76,10 @@ BEGIN_MESSAGE_MAP(CHikCameraMFCDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_CAPTURE, &CHikCameraMFCDlg::OnBnClickedBtnCapture) // 自动生成的映射
 	ON_EN_CHANGE(IDC_EDIT_IP, &CHikCameraMFCDlg::OnEnChangeEditIp)
 	ON_STN_CLICKED(IDC_VIDEO_DISPLAY, &CHikCameraMFCDlg::OnStnClickedVideoDisplay)
+	ON_BN_CLICKED(IDOK, &CHikCameraMFCDlg::OnBnClickedOk)
+	ON_BN_CLICKED(IDCANCEL, &CHikCameraMFCDlg::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_BTN_LOGIN, &CHikCameraMFCDlg::OnBnClickedBtnLogin)
+	ON_BN_CLICKED(IDC_BTN_LOGOUT, &CHikCameraMFCDlg::OnBnClickedBtnLogout)
 END_MESSAGE_MAP()
 
 // CHikCameraMFCDlg 消息处理程序
@@ -82,6 +87,15 @@ END_MESSAGE_MAP()
 BOOL CHikCameraMFCDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+
+	// 初始禁用注销按钮
+	GetDlgItem(IDC_BTN_LOGOUT)->EnableWindow(FALSE);
+
+	// 设置IDC_EDIT_IP的默认值（例如"192.168.31.64"）
+	SetDlgItemText(IDC_EDIT_IP, _T("192.168.31.245"));  // 使用_T宏确保 Unicode 兼容性
+	SetDlgItemText(IDC_EDIT_PORT, _T("8000"));  // 海康默认端口
+	SetDlgItemText(IDC_EDIT_USERNAME, _T(""));
+	SetDlgItemText(IDC_EDIT_PASSWORD, _T(""));
 
 	// 初始化SDK
 	if (!NET_DVR_Init())
@@ -320,6 +334,11 @@ void CHikCameraMFCDlg::OnBnClickedBtnCapture()
 //在对话框关闭时，需要释放 SDK 资源，在对话框类的OnCancel函数（位于HikCameraMFCDlg.cpp）中添加以下代码：
 void CHikCameraMFCDlg::OnCancel()
 {
+	// 若已登录，先注销
+	if (m_bIsLoggedIn)
+	{
+		OnBnClickedBtnLogout();  // 调用注销函数
+	}
 	// 停止预览
 	if (m_lRealHandle >= 0)
 	{
@@ -363,3 +382,106 @@ void CHikCameraMFCDlg::OnStnClickedVideoDisplay()
 }
 
 //
+void CHikCameraMFCDlg::OnBnClickedOk()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CDialogEx::OnOK();
+}
+
+void CHikCameraMFCDlg::OnBnClickedCancel()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CDialogEx::OnCancel();
+}
+void CHikCameraMFCDlg::OnBnClickedBtnLogin()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	// 若已登录，直接返回
+	if (m_bIsLoggedIn)
+	{
+		AfxMessageBox(_T("已登录，无需重复操作！"));
+		return;
+	}
+
+	// 获取界面输入的登录信息
+	CString strIP, strPort, strUser, strPwd;
+	GetDlgItemText(IDC_EDIT_IP, strIP);
+	GetDlgItemText(IDC_EDIT_PORT, strPort);
+	GetDlgItemText(IDC_EDIT_USERNAME, strUser);
+	GetDlgItemText(IDC_EDIT_PASSWORD, strPwd);
+
+	// 简单校验输入
+	if (strIP.IsEmpty() || strPort.IsEmpty() || strUser.IsEmpty())
+	{
+		AfxMessageBox(_T("IP、端口和用户名不能为空！"));
+		return;
+	}
+
+	// 转换为海康SDK需要的C字符串（宽字符转窄字符）
+	char ip[16] = { 0 }, user[32] = { 0 }, pwd[32] = { 0 };
+	int port = _ttoi(strPort);
+	WideCharToMultiByte(CP_ACP, 0, strIP, -1, ip, sizeof(ip), NULL, NULL);
+	WideCharToMultiByte(CP_ACP, 0, strUser, -1, user, sizeof(user), NULL, NULL);
+	WideCharToMultiByte(CP_ACP, 0, strPwd, -1, pwd, sizeof(pwd), NULL, NULL);
+
+	// 调用海康SDK登录接口
+	NET_DVR_DEVICEINFO_V30 deviceInfo = { 0 };
+	m_lUserID = NET_DVR_Login_V30(ip, port, user, pwd, &deviceInfo);
+
+	// 处理登录结果
+	if (m_lUserID < 0)
+	{
+		DWORD err = NET_DVR_GetLastError();
+		CString errMsg;
+		errMsg.Format(_T("登录失败！错误码：%d"), err);
+		AfxMessageBox(errMsg);
+		SetDlgItemText(IDC_STATIC_STATUS, _T("登录失败"));
+		return;
+	}
+
+	// 登录成功：更新状态和控件
+	m_bIsLoggedIn = true;
+	SetDlgItemText(IDC_STATIC_STATUS, _T("已登录"));
+	GetDlgItem(IDC_BTN_LOGIN)->EnableWindow(FALSE);   // 禁用登录按钮
+	GetDlgItem(IDC_BTN_LOGOUT)->EnableWindow(TRUE);  // 启用注销按钮
+	// 可选：禁用输入框（防止登录后修改）
+	GetDlgItem(IDC_EDIT_IP)->EnableWindow(FALSE);
+	GetDlgItem(IDC_EDIT_PORT)->EnableWindow(FALSE);
+	GetDlgItem(IDC_EDIT_USERNAME)->EnableWindow(FALSE);
+	GetDlgItem(IDC_EDIT_PASSWORD)->EnableWindow(FALSE);
+	AfxMessageBox(_T("登录成功！"));
+}
+
+void CHikCameraMFCDlg::OnBnClickedBtnLogout()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	// 若未登录，直接返回
+	if (!m_bIsLoggedIn)
+	{
+		AfxMessageBox(_T("未登录，无需注销！"));
+		return;
+	}
+
+	// 停止预览（如果正在预览）
+	if (m_lRealHandle >= 0)
+	{
+		NET_DVR_StopRealPlay(m_lRealHandle);
+		m_lRealHandle = -1;
+	}
+
+	// 调用海康SDK注销接口
+	NET_DVR_Logout(m_lUserID);
+	m_lUserID = -1;  // 重置登录句柄
+
+	// 更新状态和控件
+	m_bIsLoggedIn = false;
+	SetDlgItemText(IDC_STATIC_STATUS, _T("未登录"));
+	GetDlgItem(IDC_BTN_LOGIN)->EnableWindow(TRUE);    // 启用登录按钮
+	GetDlgItem(IDC_BTN_LOGOUT)->EnableWindow(FALSE);   // 禁用注销按钮
+	// 启用输入框（允许重新输入）
+	GetDlgItem(IDC_EDIT_IP)->EnableWindow(TRUE);
+	GetDlgItem(IDC_EDIT_PORT)->EnableWindow(TRUE);
+	GetDlgItem(IDC_EDIT_USERNAME)->EnableWindow(TRUE);
+	GetDlgItem(IDC_EDIT_PASSWORD)->EnableWindow(TRUE);
+	AfxMessageBox(_T("注销成功！"));
+}
