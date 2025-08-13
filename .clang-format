@@ -1,0 +1,7 @@
+# .clang-format
+BasedOnStyle: LLVM       # 基于LLVM风格扩展（可选：Google、Chromium、Mozilla等）
+IndentWidth: 4           # 缩进宽度为4个空格
+UseTab: Never            # 不使用Tab键，统一用空格
+TabWidth: 4              # 若使用Tab，宽度为4
+BreakBeforeBraces: Allman # 大括号另起一行（如函数、循环的{单独成行）
+ColumnLimit: 120         # 每行最大字符数
