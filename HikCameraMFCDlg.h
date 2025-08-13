@@ -41,7 +41,7 @@ protected:
 
 // 其他代码...
 private:
-	LONG m_nPort;  // 播放端口成员变量，替代全局变量
+	LONG m_lPort;  // 播放端口成员变量，替代全局变量
 	LONG m_lUserID;  // 已有的设备登录句柄
 	LONG m_lRealHandle;  // 已有的预览句柄
 

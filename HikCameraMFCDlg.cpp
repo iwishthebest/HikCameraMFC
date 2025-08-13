@@ -1,4 +1,4 @@
-﻿#pragma once
+﻿//#pragma once
 #undef ZOOM_IN
 #undef ZOOM_OUT
 #include "HCNetSDK.h"  // 海康SDK头文件
@@ -64,7 +64,7 @@ CHikCameraMFCDlg::CHikCameraMFCDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_HIKCAMERAMFC_DIALOG, pParent)
 	, m_lUserID(-1)
 	, m_lRealHandle(-1)
-	, m_nPort(-1)  // 初始化播放端口为无效值
+	, m_lPort(-1)  // 初始化播放端口为无效值
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -231,25 +231,25 @@ void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer
 	{
 		// 初始化播放库相关操作，获取播放端口等
 		// 通过对话框指针访问m_nPort成员变量
-		if (!PlayM4_GetPort(&pDlg->m_nPort))
+		if (!PlayM4_GetPort(&pDlg->m_lPort))
 		{
 			return;
 		}
-		if (!PlayM4_SetStreamOpenMode(pDlg->m_nPort, STREAME_REALTIME))
+		if (!PlayM4_SetStreamOpenMode(pDlg->m_lPort, STREAM_REALTIME))
 		{
 			return;
 		}
-		if (!PlayM4_OpenStream(pDlg->m_nPort, pBuffer, dwBufSize, 1024 * 1024))
+		if (!PlayM4_OpenStream(pDlg->m_lPort, pBuffer, dwBufSize, 1024 * 1024))
 		{
 			return;
 		}
 		// 获取对话框中用于显示视频的Static Text控件句柄
 		CWnd* pWnd = ((CHikCameraMFCDlg*)pUser)->GetDlgItem(IDC_VIDEO_DISPLAY);
-		if (!PlayM4_SetDisplayBuf(pDlg->m_nPort, 15))
+		if (!PlayM4_SetDisplayBuf(pDlg->m_lPort, 15))
 		{
 			return;
 		}
-		if (!PlayM4_Play(pDlg->m_nPort, pWnd->m_hWnd))
+		if (!PlayM4_Play(pDlg->m_lPort, pWnd->m_hWnd))
 		{
 			return;
 		}
@@ -257,7 +257,7 @@ void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer
 	else if (dwDataType == NET_DVR_STREAMDATA)
 	{
 		// 输入视频流数据到播放库进行解码播放
-		PlayM4_InputData(pDlg->m_nPort, pBuffer, dwBufSize);
+		PlayM4_InputData(pDlg->m_lPort, pBuffer, dwBufSize);
 	}
 }
 
@@ -343,11 +343,11 @@ void CHikCameraMFCDlg::OnCancel()
 	// 清理SDK
 	NET_DVR_Cleanup();
 	// 关闭播放库端口（如果使用了播放库）
-	if (m_nPort >= 0)
+	if (m_lPort >= 0)
 	{
-		PlayM4_Stop(m_nPort);
-		PlayM4_CloseStream(m_nPort);
-		PlayM4_FreePort(m_nPort);
+		PlayM4_Stop(m_lPort);
+		PlayM4_CloseStream(m_lPort);
+		PlayM4_FreePort(m_lPort);
 	}
 	CDialogEx::OnCancel();
 }
