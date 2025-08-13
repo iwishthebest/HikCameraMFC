@@ -41169,7 +41169,7 @@ typedef struct    tagNET_DVR_FIND_PICTURE_V50   //查找结果结构体
     BYTE   byPlateColor;//参考结构 VCA_PLATE_COLOR
     BYTE   byVehicleLogo;//参考结构 VLR_VEHICLE_CLASS
     BYTE   byFileType;  //文件类型， :0定时抓图1 移动侦测抓图 2 报警抓图3  报警 | 移动侦测抓图 4 报警 & 移动侦测抓图     6 手动抓图 ,9-智能图片,10- PIR报警，11- 无线报警，12- 呼救报警,\
-                       //0xa 预览时截图，0xd 人脸侦测, 0xe 越界侦测，0xf 入侵区域侦测，0x10 场景变更侦测, 0x11-设备本地回放时截图, 0x12-智能侦测, 0x70-通道定时抓图
+                       0xa 预览时截图，0xd 人脸侦测, 0xe 越界侦测，0xf 入侵区域侦测，0x10 场景变更侦测, 0x11-设备本地回放时截图, 0x12-智能侦测, 0x70-通道定时抓图
     BYTE   byRecogResult;//识别结果参考结构VTR_RESULT
     char   sLicense[MAX_LICENSE_LEN/*16*/];    //车牌号码
     BYTE   byEventSearchStatus; //连续图片表示同一查找结果的时候，0-表示后面没有图片信息，1-表示后面还有图片信息。总共图片信息包括最后一张状态为0的图片。

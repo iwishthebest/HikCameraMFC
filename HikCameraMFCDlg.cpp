@@ -1,6 +1,4 @@
-﻿// HikCameraMFCDlg.cpp: 实现文件
-//
-#include "pch.h"
+﻿#include "pch.h"
 #include "framework.h"
 #include "HikCameraMFC.h"
 #include "HikCameraMFCDlg.h"
@@ -107,43 +105,45 @@ BOOL CHikCameraMFCDlg::OnInitDialog()
 	NET_DVR_SetConnectTime(2000, 1);
 	NET_DVR_SetReconnect(10000, TRUE);
 
-	// 获取用户在界面输入的相机信息（假设通过Edit Control控件输入）
-	CString strIP, strPort, strUser, strPwd;
-	GetDlgItemText(IDC_EDIT_IP, strIP);
-	GetDlgItemText(IDC_EDIT_PORT, strPort);
-	GetDlgItemText(IDC_EDIT_USERNAME, strUser);
-	GetDlgItemText(IDC_EDIT_PASSWORD, strPwd);
 
-	// 转换为char*类型
-	char  ipBuf[16] = { 0 };
-	char  userBuf[32] = { 0 };
-	char  pwdBuf[32] = { 0 };
-	int port = _ttoi(strPort);
+	// 初始化登录，全部注释掉
+	//// 获取用户在界面输入的相机信息（假设通过Edit Control控件输入）
+	//CString strIP, strPort, strUser, strPwd;
+	//GetDlgItemText(IDC_EDIT_IP, strIP);
+	//GetDlgItemText(IDC_EDIT_PORT, strPort);
+	//GetDlgItemText(IDC_EDIT_USERNAME, strUser);
+	//GetDlgItemText(IDC_EDIT_PASSWORD, strPwd);
 
-	// 使用 WideCharToMultiByte 转换宽字符到窄字符
-	// 转换 IP
-	WideCharToMultiByte(CP_ACP, 0, strIP, -1, ipBuf, sizeof(ipBuf), NULL, NULL);
-	// 转换用户名
-	WideCharToMultiByte(CP_ACP, 0, strUser, -1, userBuf, sizeof(userBuf), NULL, NULL);
-	// 转换密码
-	WideCharToMultiByte(CP_ACP, 0, strPwd, -1, pwdBuf, sizeof(pwdBuf), NULL, NULL);
+	//// 转换为char*类型
+	//char  ipBuf[16] = { 0 };
+	//char  userBuf[32] = { 0 };
+	//char  pwdBuf[32] = { 0 };
+	//int port = _ttoi(strPort);
 
-	// 声明设备信息结构体（需包含海康SDK头文件）
-	NET_DVR_DEVICEINFO_V30 deviceInfo = { 0 };
+	//// 使用 WideCharToMultiByte 转换宽字符到窄字符
+	//// 转换 IP
+	//WideCharToMultiByte(CP_ACP, 0, strIP, -1, ipBuf, sizeof(ipBuf), NULL, NULL);
+	//// 转换用户名
+	//WideCharToMultiByte(CP_ACP, 0, strUser, -1, userBuf, sizeof(userBuf), NULL, NULL);
+	//// 转换密码
+	//WideCharToMultiByte(CP_ACP, 0, strPwd, -1, pwdBuf, sizeof(pwdBuf), NULL, NULL);
 
-	// 登录相机（此时参数类型匹配）
-	m_lUserID = NET_DVR_Login_V30(ipBuf, port, userBuf, pwdBuf, &deviceInfo);
+	//// 声明设备信息结构体（需包含海康SDK头文件）
+	//NET_DVR_DEVICEINFO_V30 deviceInfo = { 0 };
 
-	// 检查登录结果
-	if (m_lUserID < 0) {
-		DWORD err = NET_DVR_GetLastError();
-		CString strErr;
-		strErr.Format(_T("登录失败，错误码：%d"), err);
-		AfxMessageBox(strErr);
-	}
-	else {
-		AfxMessageBox(_T("登录成功！"));
-	}
+	//// 登录相机（此时参数类型匹配）
+	//m_lUserID = NET_DVR_Login_V30(ipBuf, port, userBuf, pwdBuf, &deviceInfo);
+
+	//// 检查登录结果
+	//if (m_lUserID < 0) {
+	//	DWORD err = NET_DVR_GetLastError();
+	//	CString strErr;
+	//	strErr.Format(_T("登录失败，错误码：%d"), err);
+	//	AfxMessageBox(strErr);
+	//}
+	//else {
+	//	AfxMessageBox(_T("登录成功！"));
+	//}
 
 	// 将“关于...”菜单项添加到系统菜单中。
 
@@ -268,7 +268,7 @@ void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer
 //在资源视图中，双击 “开始预览” 按钮，自动生成按钮点击事件处理函数，在HikCameraMFCDlg.cpp中实现
 void CHikCameraMFCDlg::OnBnClickedStartPreview()
 {
-	if (m_lUserID < 0)
+    if (m_lUserID < 0 || !m_bIsLoggedIn)
 	{
 		AfxMessageBox(_T("请先登录相机！"));
 		return;
@@ -306,7 +306,7 @@ void CHikCameraMFCDlg::OnBnClickedStartPreview()
 //添加 “抓图” 按钮点击事件处理函数，在HikCameraMFCDlg.cpp中实现：
 void CHikCameraMFCDlg::OnBnClickedBtnCapture()
 {
-	if (m_lUserID < 0)
+    if (m_lUserID < 0 || !m_bIsLoggedIn)
 	{
 		AfxMessageBox(_T("请先登录相机！"));
 		return;

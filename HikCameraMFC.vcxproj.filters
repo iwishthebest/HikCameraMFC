@@ -36,7 +36,7 @@
     <ClInclude Include="include\PlayM4.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\HCNetSDK.h">
+    <ClInclude Include="..\..\CH-HCNetSDKV6.1.9.48\headers\HCNetSDK.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
