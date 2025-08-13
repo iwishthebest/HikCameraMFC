@@ -1,13 +1,5 @@
-﻿//#pragma once
-#undef ZOOM_IN
-#undef ZOOM_OUT
-#include "HCNetSDK.h"  // 海康SDK头文件
-#include "PlayM4.h"
-
-
-// HikCameraMFCDlg.cpp: 实现文件
+﻿// HikCameraMFCDlg.cpp: 实现文件
 //
-
 #include "pch.h"
 #include "framework.h"
 #include "HikCameraMFC.h"
@@ -15,12 +7,12 @@
 #include "afxdialogex.h"
 #include <string>
 
+#include "HCNetSDK.h"
+#include "PlayM4.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-
-
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -29,15 +21,15 @@ class CAboutDlg : public CDialogEx
 public:
 	CAboutDlg();
 
-// 对话框数据
+	// 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_ABOUTBOX };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
-// 实现
+	// 实现
 protected:
 	DECLARE_MESSAGE_MAP()
 };
@@ -52,10 +44,8 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
-	
-	
-END_MESSAGE_MAP()
 
+END_MESSAGE_MAP()
 
 // CHikCameraMFCDlg 对话框
 
@@ -68,7 +58,6 @@ CHikCameraMFCDlg::CHikCameraMFCDlg(CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
-
 
 void CHikCameraMFCDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -84,8 +73,9 @@ BEGIN_MESSAGE_MAP(CHikCameraMFCDlg, CDialogEx)
 	// 添加以下行：关联按钮ID和处理函数
 	ON_BN_CLICKED(IDC_BTN_START_PREVIEW, &CHikCameraMFCDlg::OnBnClickedStartPreview)
 	ON_BN_CLICKED(IDC_BTN_CAPTURE, &CHikCameraMFCDlg::OnBnClickedBtnCapture) // 自动生成的映射
+	ON_EN_CHANGE(IDC_EDIT_IP, &CHikCameraMFCDlg::OnEnChangeEditIp)
+	ON_STN_CLICKED(IDC_VIDEO_DISPLAY, &CHikCameraMFCDlg::OnStnClickedVideoDisplay)
 END_MESSAGE_MAP()
-
 
 // CHikCameraMFCDlg 消息处理程序
 
@@ -235,7 +225,7 @@ void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE* pBuffer
 		{
 			return;
 		}
-		if (!PlayM4_SetStreamOpenMode(pDlg->m_lPort, STREAM_REALTIME))
+		if (!PlayM4_SetStreamOpenMode(pDlg->m_lPort, STREAME_REALTIME))
 		{
 			return;
 		}
@@ -356,3 +346,20 @@ void CHikCameraMFCDlg::OnBnClickedNo()
 {
 	// TODO: 在此添加控件通知处理程序代码
 }
+
+void CHikCameraMFCDlg::OnEnChangeEditIp()
+{
+	// TODO:  如果该控件是 RICHEDIT 控件，它将不
+	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
+	// 函数并调用 CRichEditCtrl().SetEventMask()，
+	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
+
+	// TODO:  在此添加控件通知处理程序代码
+}
+
+void CHikCameraMFCDlg::OnStnClickedVideoDisplay()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+//

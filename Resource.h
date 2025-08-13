@@ -12,10 +12,13 @@
 #define IDC_EDIT_USERNAME               1002
 #define IDC_EDIT_PASSWORD               1003
 #define IDC_VIDEO_DISPLAY               1004
-
 #define IDC_BTN_START_PREVIEW           1006
 #define IDC_BTN_CAPTURE                 1007
 
+//IP 输入框 → IDC_EDIT_IP
+//端口输入框 → IDC_EDIT_PORT
+//用户名输入框 → IDC_EDIT_USERNAME
+//密码输入框 → IDC_EDIT_PASSWORD
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

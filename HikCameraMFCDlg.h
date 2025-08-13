@@ -52,4 +52,6 @@ public:
 	//LONG* GetPortPtr() { return &m_nPort; }          // 提供指针（供PlayM4_GetPort修改）
 	//void SetPort(int port) { m_nPort = port; }      // 写访问（可选，按需添加）
 
+	afx_msg void OnEnChangeEditIp();
+	afx_msg void OnStnClickedVideoDisplay();
 };

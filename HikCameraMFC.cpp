@@ -1,11 +1,4 @@
-﻿
-// HikCameraMFC.cpp: 定义应用程序的类行为。
-//
-#undef ZOOM_IN
-#undef ZOOM_OUT
-#include "HCNetSDK.h"  // 海康SDK头文件
-
-#include "pch.h"
+﻿#include "pch.h"
 #include "framework.h"
 #include "HikCameraMFC.h"
 #include "HikCameraMFCDlg.h"
@@ -14,14 +7,11 @@
 #define new DEBUG_NEW
 #endif
 
-
-
 // CHikCameraMFCApp
 
 BEGIN_MESSAGE_MAP(CHikCameraMFCApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 END_MESSAGE_MAP()
-
 
 // CHikCameraMFCApp 构造
 
@@ -34,11 +24,9 @@ CHikCameraMFCApp::CHikCameraMFCApp()
 	// 将所有重要的初始化放置在 InitInstance 中
 }
 
-
 // 唯一的 CHikCameraMFCApp 对象
 
 CHikCameraMFCApp theApp;
-
 
 // CHikCameraMFCApp 初始化
 
@@ -56,12 +44,11 @@ BOOL CHikCameraMFCApp::InitInstance()
 
 	CWinApp::InitInstance();
 
-
 	AfxEnableControlContainer();
 
 	// 创建 shell 管理器，以防对话框包含
 	// 任何 shell 树视图控件或 shell 列表视图控件。
-	CShellManager *pShellManager = new CShellManager;
+	CShellManager* pShellManager = new CShellManager;
 
 	// 激活“Windows Native”视觉管理器，以便在 MFC 控件中启用主题
 	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
@@ -108,4 +95,3 @@ BOOL CHikCameraMFCApp::InitInstance()
 	//  而不是启动应用程序的消息泵。
 	return FALSE;
 }
-

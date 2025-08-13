@@ -76,6 +76,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>.\bin\</OutDir>
+    <IntDir>.\Debug\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -85,6 +87,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>.\bin\</OutDir>
+    <IntDir>.\Debug\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -93,13 +97,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>G:\vsProjects\HikCameraMFC\include;.\include</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <AdditionalIncludeDirectories>.\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>G:\vsProjects\HikCameraMFC\resources</AdditionalLibraryDirectories>
-      <AdditionalDependencies>HCNetSDK.lib;PlayM4.lib;PlayCtrl.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>HCNetSDK.lib;PlayCtrl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\bin\HikCameraMFC.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -169,13 +175,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>G:\vsProjects\HikCameraMFC\include;.\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>G:\vsProjects\HikCameraMFC\resources</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <OutputFile>.\bin\HikCameraMFC.exe</OutputFile>
+      <AdditionalDependencies>HCNetSDK.lib;PlayCtrl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -192,6 +201,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="HikCameraMFC.h" />
     <ClInclude Include="HikCameraMFCDlg.h" />
+    <ClInclude Include="include\HCNetSDK.h" />
     <ClInclude Include="include\PlayM4.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
