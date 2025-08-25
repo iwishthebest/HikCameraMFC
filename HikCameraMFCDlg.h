@@ -1,6 +1,5 @@
 ﻿// HikCameraMFCDlg.h: 头文件
 //
-#include "HCNetSDK.h"
 
 #pragma once
 
@@ -32,6 +31,7 @@ class CHikCameraMFCDlg : public CDialogEx
 
     // 生成的消息映射函数
     virtual BOOL OnInitDialog();
+    afx_msg void OnSize(UINT nType, int cx, int cy); // 处理最大化 / 最小化
     afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
     afx_msg void OnPaint();
     afx_msg HCURSOR OnQueryDragIcon();
@@ -52,7 +52,12 @@ class CHikCameraMFCDlg : public CDialogEx
 
     // 抓图相关
     CString m_strCapturePath; // 保存抓图路径
-    CString GetCurrentTimeStr(); 
+    CString GetCurrentTimeStr();
+
+    // 控件布局相关
+    CMap<UINT, UINT, CRect, CRect> m_mapCtrlOrigRect; // 存储控件初始位置和大小
+    bool m_bInitLayout;                               // 标记布局是否已初始化
+    CRect m_rectOrigDlg;                              // 对话框初始客户区大小
 
   public:
     afx_msg void OnBnClickedNo();
