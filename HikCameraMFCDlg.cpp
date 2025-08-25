@@ -1,4 +1,7 @@
-﻿#include "pch.h"
+﻿// DemoDlg.cpp : 实现文件
+//
+
+#include "pch.h"
 #include "framework.h"
 #include "HikCameraMFC.h"
 #include "HikCameraMFCDlg.h"
@@ -10,6 +13,12 @@
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
+#endif
+
+#if defined(WIN64)
+#pragma comment(lib, "./lib/VideoSDK.lib")
+#elif defined(WIN32)
+#pragma comment(lib, "./lib/VideoSDK.lib")
 #endif
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
