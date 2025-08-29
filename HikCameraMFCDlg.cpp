@@ -1,18 +1,17 @@
 ﻿// DemoDlg.cpp : 实现文件
 
-#include "pch.h"
-#include "framework.h"
-#include "HikCameraMFC.h"
-#include "HikCameraMFCDlg.h"
-#include "afxdialogex.h"
-#include <string>
-#include "HCNetSDK.h"
-#include "PlayM4.h"
+#include "pch.h"          // 预编译头文件，通常包含 framework.h
+#include "framework.h"    // MFC框架头文件
+#include <string>          // 标准库头文件
+#include "HCNetSDK.h"     // 第三方库头文件，海康SDK
+#include "PlayM4.h"       // 第三方库头文件，播放库
+#include "HikCameraMFC.h" // 项目特定头文件
+#include "HikCameraMFCDlg.h" // 项目特定头文件，主对话框类
+#include "afxdialogex.h"    // MFC对话框扩展类头文件
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -50,9 +49,9 @@ END_MESSAGE_MAP()
 // 在CHikCameraMFCDlg.cpp的构造函数中初始化（可选，建议初始化）：
 CHikCameraMFCDlg::CHikCameraMFCDlg(CWnd *pParent /*=nullptr*/)
     : CDialogEx(IDD_HIKCAMERAMFC_DIALOG, pParent), m_lUserID(-1), m_lRealHandle(-1),
-      m_bIsLoggedIn(false) // 初始化未登录
-      ,
-      m_lPort(-1) // 初始化播放端口为无效值
+      m_bIsLoggedIn(false), // 初始化未登录
+      m_lPort(-1),          // 初始化播放端口为无效值
+      m_bInitLayout(false)
 {
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -88,7 +87,7 @@ BOOL CHikCameraMFCDlg::OnInitDialog()
 
     // 设置IDC_EDIT_IP的默认值
     SetDlgItemText(IDC_EDIT_IP, _T("192.168.0.101")); // 使用_T宏确保 Unicode 兼容性
-    SetDlgItemText(IDC_EDIT_PORT, _T("8000"));         // 海康默认端口
+    SetDlgItemText(IDC_EDIT_PORT, _T("8000"));        // 海康默认端口
     SetDlgItemText(IDC_EDIT_USERNAME, _T("admin"));
     SetDlgItemText(IDC_EDIT_PASSWORD, _T("fkqxk010"));
 
@@ -128,8 +127,8 @@ BOOL CHikCameraMFCDlg::OnInitDialog()
     SetIcon(m_hIcon, FALSE); // 设置小图标
 
     // TODO: 在此添加额外的初始化代码
-    // 
-    // 
+    //
+    //
     // 初始化布局变量
     m_bInitLayout = false;
     GetClientRect(m_rectOrigDlg); // 记录对话框初始大小
@@ -346,7 +345,7 @@ void CHikCameraMFCDlg::OnBnClickedBtnCapture()
     CString strTime = GetCurrentTimeStr(); // 调用自定义时间函数
     CString strSavePath;
     // 保存到项目内capture文件夹，文件名含时间戳
-    strSavePath.Format(_T("./capture/%s.jpg"), (LPCTSTR)strTime); 
+    strSavePath.Format(_T("./capture/%s.jpg"), (LPCTSTR)strTime);
 
     // 3. 转换宽字符路径为窄字符（海康SDK接口要求char*类型）
     char savePathBuf[MAX_PATH] = {0};
