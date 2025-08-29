@@ -70,4 +70,7 @@ class CHikCameraMFCDlg : public CDialogEx
     afx_msg void OnBnClickedBtnLogin();
     afx_msg void OnBnClickedBtnLogout();
     afx_msg void OnLvnItemchangedListCameras(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnBnClickedButton1();
+    afx_msg void OnBnClickedBtnBatchLogin();
+    afx_msg void OnTcnSelchangeTabPreview(NMHDR *pNMHDR, LRESULT *pResult);
 };

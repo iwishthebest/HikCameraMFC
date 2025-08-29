@@ -75,6 +75,9 @@ ON_BN_CLICKED(IDCANCEL, &CHikCameraMFCDlg::OnBnClickedCancel)
 ON_BN_CLICKED(IDC_BTN_LOGIN, &CHikCameraMFCDlg::OnBnClickedBtnLogin)
 ON_BN_CLICKED(IDC_BTN_LOGOUT, &CHikCameraMFCDlg::OnBnClickedBtnLogout)
 ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_CAMERAS, &CHikCameraMFCDlg::OnLvnItemchangedListCameras)
+ON_BN_CLICKED(IDC_BUTTON1, &CHikCameraMFCDlg::OnBnClickedButton1)
+ON_BN_CLICKED(IDC_BTN_BATCH_LOGIN, &CHikCameraMFCDlg::OnBnClickedBtnBatchLogin)
+ON_NOTIFY(TCN_SELCHANGE, IDC_TAB_PREVIEW, &CHikCameraMFCDlg::OnTcnSelchangeTabPreview)
 END_MESSAGE_MAP()
 
 // CHikCameraMFCDlg 消息处理程序
@@ -648,5 +651,63 @@ void CHikCameraMFCDlg::OnNMClickListCameras(NMHDR *pNMHDR, LRESULT *pResult)
         }
     }
 
+    *pResult = 0;
+}
+
+void CHikCameraMFCDlg::OnBnClickedBtnBatchLogin()
+{
+    // TODO: 在此添加控件通知处理程序代码
+    for (int i = 0; i < m_arrCameras.GetSize(); i++)
+    {
+        if (!m_arrCameras[i].bIsLoggedIn)
+        {
+            // 显示登录进度
+            CString strMsg;
+            strMsg.Format(_T("正在登录相机 %d..."), i + 1);
+            UpdateCameraStatus(i, strMsg);
+
+            // 执行登录（实际项目中建议用线程避免UI卡顿）
+            if (LoginCamera(i))
+            {
+                UpdateCameraStatus(i, _T("已登录"));
+            }
+            else
+            {
+                UpdateCameraStatus(i, _T("登录失败"));
+            }
+        }
+    }
+}
+bool CHikCameraMFCDlg::LoginCamera(int nIndex)
+{
+    if (nIndex < 0 || nIndex >= m_arrCameras.GetSize())
+        return false;
+
+    CameraInfo &cam = m_arrCameras[nIndex];
+
+    // 这里可以弹出输入框让用户输入用户名密码
+    // 简化处理：使用预设值
+    cam.strUser = _T("admin");
+    cam.strPwd = _T("12345");
+
+    // 海康SDK登录流程（同之前的实现）
+    NET_DVR_DEVICEINFO_V30 deviceInfo = {0};
+    cam.lUserID = NET_DVR_Login_V30(cam.strIP, cam.nPort, cam.strUser, cam.strPwd, &deviceInfo);
+
+    if (cam.lUserID < 0)
+    {
+        CString strErr;
+        strErr.Format(_T("错误码: %d"), NET_DVR_GetLastError());
+        UpdateCameraStatus(nIndex, strErr);
+        cam.bIsLoggedIn = false;
+        return false;
+    }
+
+    cam.bIsLoggedIn = true;
+    return true;
+}
+void CHikCameraMFCDlg::OnTcnSelchangeTabPreview(NMHDR *pNMHDR, LRESULT *pResult)
+{
+    // TODO: 在此添加控件通知处理程序代码
     *pResult = 0;
 }
