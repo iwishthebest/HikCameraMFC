@@ -74,6 +74,7 @@ ON_BN_CLICKED(IDOK, &CHikCameraMFCDlg::OnBnClickedOk)
 ON_BN_CLICKED(IDCANCEL, &CHikCameraMFCDlg::OnBnClickedCancel)
 ON_BN_CLICKED(IDC_BTN_LOGIN, &CHikCameraMFCDlg::OnBnClickedBtnLogin)
 ON_BN_CLICKED(IDC_BTN_LOGOUT, &CHikCameraMFCDlg::OnBnClickedBtnLogout)
+ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_CAMERAS, &CHikCameraMFCDlg::OnLvnItemchangedListCameras)
 END_MESSAGE_MAP()
 
 // CHikCameraMFCDlg 消息处理程序
@@ -127,7 +128,24 @@ BOOL CHikCameraMFCDlg::OnInitDialog()
     SetIcon(m_hIcon, FALSE); // 设置小图标
 
     // TODO: 在此添加额外的初始化代码
-    //
+    
+    // 初始化相机列表控件
+    CListCtrl *pList = (CListCtrl *)GetDlgItem(IDC_LIST_CAMERAS);
+    pList->SetExtendedStyle(pList->GetExtendedStyle() | LVS_EX_FULLROWSELECT | // 整行选择
+                            LVS_EX_GRIDLINES);                                 // 网格线
+
+    // 添加列：序号、IP地址、端口、状态、操作
+    pList->InsertColumn(0, _T("序号"), LVCFMT_CENTER, 60);
+    pList->InsertColumn(1, _T("IP地址"), LVCFMT_CENTER, 120);
+    pList->InsertColumn(2, _T("端口"), LVCFMT_CENTER, 80);
+    pList->InsertColumn(3, _T("状态"), LVCFMT_CENTER, 100);
+    pList->InsertColumn(4, _T("操作"), LVCFMT_CENTER, 150);
+
+    // 初始添加几个相机（可从配置文件读取）
+    AddCameraToList(_T("192.168.0.101"), 8000);
+    AddCameraToList(_T("192.168.0.102"), 8000);
+    AddCameraToList(_T("192.168.0.103"), 8000);
+
     //
     // 初始化布局变量
     m_bInitLayout = false;
@@ -545,4 +563,90 @@ CString CHikCameraMFCDlg::GetCurrentTimeStr()
     CTime currentTime = CTime::GetCurrentTime(); // 获取当前系统时间
     // 格式化为"YYYYMMDD_HHMMSS"（避免文件名包含特殊字符）
     return currentTime.Format(_T("%Y%m%d_%H%M%S"));
+}
+
+void CHikCameraMFCDlg::AddCameraToList(LPCTSTR lpszIP, int nPort)
+{
+    CListCtrl *pList = (CListCtrl *)GetDlgItem(IDC_LIST_CAMERAS);
+    int nItem = pList->GetItemCount(); // 新项的索引
+
+    // 添加行数据
+    pList->InsertItem(nItem, _T("")); // 序号留空，后续填充
+    pList->SetItemText(nItem, 1, lpszIP);
+    pList->SetItemText(nItem, 2, CString(std::to_string(nPort).c_str()));
+    pList->SetItemText(nItem, 3, _T("未登录"));
+    pList->SetItemText(nItem, 4, _T("登录 | 预览")); // 操作按钮文本
+
+    // 填充序号
+    pList->SetItemText(nItem, 0, CString(std::to_string(nItem + 1).c_str()));
+
+    // 同步更新CameraInfo数组
+    CameraInfo cam;
+    cam.strIP = lpszIP;
+    cam.nPort = nPort;
+    cam.strUser = _T("admin"); // 默认用户名
+    cam.strPwd = _T("12345");  // 默认密码
+    cam.lUserID = -1;
+    cam.lRealHandle = -1;
+    cam.bIsLoggedIn = false;
+    m_arrCameras.Add(cam);
+}
+
+void CHikCameraMFCDlg::UpdateCameraStatus(int nIndex, LPCTSTR lpszStatus)
+{
+    if (nIndex < 0 || nIndex >= m_arrCameras.GetSize())
+        return;
+    CListCtrl *pList = (CListCtrl *)GetDlgItem(IDC_LIST_CAMERAS);
+    pList->SetItemText(nIndex, 3, lpszStatus);
+}
+
+void CHikCameraMFCDlg::OnLvnItemchangedListCameras(NMHDR *pNMHDR, LRESULT *pResult)
+{
+    LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+    // TODO: 在此添加控件通知处理程序代码
+    *pResult = 0;
+}
+
+void CHikCameraMFCDlg::OnNMClickListCameras(NMHDR *pNMHDR, LRESULT *pResult)
+{
+    LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+
+    CListCtrl *pList = (CListCtrl *)GetDlgItem(IDC_LIST_CAMERAS);
+    int nItem = pNMItemActivate->iItem;       // 点击的行索引
+    int nSubItem = pNMItemActivate->iSubItem; // 点击的列索引
+
+    // 只处理"操作"列（索引4）的点击
+    if (nItem >= 0 && nSubItem == 4)
+    {
+        // 获取点击位置的坐标
+        CPoint pt(pNMItemActivate->ptAction);
+        pList->ScreenToClient(&pt);
+
+        // 获取"操作"列的文本范围
+        CRect rect;
+        pList->GetSubItemRect(nItem, 4, LVIR_LABEL, rect);
+
+        if (rect.PtInRect(pt))
+        {
+            // 判断点击的是"登录"还是"预览"
+            CString strText = pList->GetItemText(nItem, 4);
+            int nLoginPos = strText.Find(_T("登录"));
+            int nPreviewPos = strText.Find(_T("预览"));
+
+            // 计算文本区域（简单判断左右区域）
+            int nSplit = rect.left + rect.Width() / 2;
+            if (pt.x < nSplit && nLoginPos != -1)
+            {
+                // 点击"登录"
+                OnCameraLogin(nItem);
+            }
+            else if (pt.x >= nSplit && nPreviewPos != -1)
+            {
+                // 点击"预览"
+                OnCameraPreview(nItem);
+            }
+        }
+    }
+
+    *pResult = 0;
 }

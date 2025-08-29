@@ -39,6 +39,9 @@
     <ClInclude Include="..\..\CH-HCNetSDKV6.1.9.48\headers\HCNetSDK.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CameraDef.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HikCameraMFC.cpp">

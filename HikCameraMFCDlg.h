@@ -2,6 +2,7 @@
 //
 
 #pragma once
+#include "CameraDef.h"
 
 // CHikCameraMFCDlg 对话框
 class CHikCameraMFCDlg : public CDialogEx
@@ -42,13 +43,9 @@ class CHikCameraMFCDlg : public CDialogEx
 
     // 其他代码...
   private:
-    LONG m_lPort; // 播放端口成员变量，替代全局变量
-    // 登录句柄（海康SDK用）
-    LONG m_lUserID; // 初始化为-1（未登录）
-    // 登录状态标识
-    bool m_bIsLoggedIn; // 初始化为false
-    // 视频预览句柄（如果需要）
-    LONG m_lRealHandle; // 初始化为-1
+    // 移除原有的单个相机变量，替换为容器
+    CArray<CameraInfo, CameraInfo> m_arrCameras; // 存储所有相机信息
+    int m_nCurrentCameraIndex;                   // 当前操作的相机索引（可选）
 
     // 抓图相关
     CString m_strCapturePath; // 保存抓图路径
@@ -59,6 +56,11 @@ class CHikCameraMFCDlg : public CDialogEx
     bool m_bInitLayout;                               // 标记布局是否已初始化
     CRect m_rectOrigDlg;                              // 对话框初始客户区大小
 
+    // 向列表添加相机
+    void AddCameraToList(LPCTSTR lpszIP, int nPort);
+    // 更新列表中相机的状态
+    void UpdateCameraStatus(int nIndex, LPCTSTR lpszStatus);
+
   public:
     afx_msg void OnBnClickedNo();
     afx_msg void OnEnChangeEditIp();
@@ -67,4 +69,5 @@ class CHikCameraMFCDlg : public CDialogEx
     afx_msg void OnBnClickedCancel();
     afx_msg void OnBnClickedBtnLogin();
     afx_msg void OnBnClickedBtnLogout();
+    afx_msg void OnLvnItemchangedListCameras(NMHDR *pNMHDR, LRESULT *pResult);
 };
