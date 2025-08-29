@@ -13,11 +13,6 @@
 #define new DEBUG_NEW
 #endif
 
-#if defined(WIN64)
-#pragma comment(lib, "./lib/VideoSDK.lib")
-#elif defined(WIN32)
-#pragma comment(lib, "./lib/VideoSDK.lib")
-#endif
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -91,8 +86,8 @@ BOOL CHikCameraMFCDlg::OnInitDialog()
     // 初始禁用注销按钮
     GetDlgItem(IDC_BTN_LOGOUT)->EnableWindow(FALSE);
 
-    // 设置IDC_EDIT_IP的默认值（例如"192.168.31.64"）
-    SetDlgItemText(IDC_EDIT_IP, _T("192.168.31.246")); // 使用_T宏确保 Unicode 兼容性
+    // 设置IDC_EDIT_IP的默认值
+    SetDlgItemText(IDC_EDIT_IP, _T("192.168.0.101")); // 使用_T宏确保 Unicode 兼容性
     SetDlgItemText(IDC_EDIT_PORT, _T("8000"));         // 海康默认端口
     SetDlgItemText(IDC_EDIT_USERNAME, _T("admin"));
     SetDlgItemText(IDC_EDIT_PASSWORD, _T("fkqxk010"));
