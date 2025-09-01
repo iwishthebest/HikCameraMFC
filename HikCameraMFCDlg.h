@@ -29,6 +29,7 @@ class CHikCameraMFCDlg : public CDialogEx
     // 构造
   public:
     CHikCameraMFCDlg(CWnd *pParent = nullptr); // 标准构造函数
+    virtual ~CHikCameraMFCDlg();               // 声明析构函数
 
     // 对话框数据
 #ifdef AFX_DESIGN_TIME
@@ -78,6 +79,9 @@ class CHikCameraMFCDlg : public CDialogEx
     // 更新列表中相机的状态
     void UpdateCameraStatus(int nIndex, LPCTSTR lpszStatus);
 
+    // 字符串转换函数
+    char *ConvertCStringToChar(const CString &str); 
+
   public:
     afx_msg void OnBnClickedNo();
     afx_msg void OnEnChangeEditIp();
@@ -87,8 +91,12 @@ class CHikCameraMFCDlg : public CDialogEx
     afx_msg void OnBnClickedBtnLogin();
     afx_msg void OnBnClickedBtnLogout();
     afx_msg void OnLvnItemchangedListCameras(NMHDR *pNMHDR, LRESULT *pResult);
+    void OnNMClickListCameras(NMHDR *pNMHDR, LRESULT *pResult);
     afx_msg void OnBnClickedBtnBatchLogin();
+    bool LoginCamera(int nIndex);
     afx_msg void OnTcnSelchangeTabPreview(NMHDR *pNMHDR, LRESULT *pResult);
     afx_msg void OnLvnItemchangedCameraList(NMHDR *pNMHDR, LRESULT *pResult);
     void AddCamera(CString ip, int port, CString user, CString pwd);
+    void UpdateCameraList();
+    CameraInfo *GetSelectedCamera();
 };
