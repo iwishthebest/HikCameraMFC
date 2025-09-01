@@ -2,7 +2,22 @@
 //
 
 #pragma once
-#include "CameraDef.h"
+#include <vector>
+
+// 相机信息结构体
+struct CameraInfo
+{
+    CString ip;       // IP地址
+    int port;         // 端口
+    CString username; // 用户名
+    CString password; // 密码
+    LONG userID;      // 登录句柄
+    LONG realHandle;  // 预览句柄
+    LONG playPort;    // 播放端口
+    bool isLoggedIn;  // 登录状态
+    CWnd *displayWnd; // 显示窗口
+    int listIndex;    // 在列表中的索引
+};
 
 // CHikCameraMFCDlg 对话框
 class CHikCameraMFCDlg : public CDialogEx
@@ -43,10 +58,12 @@ class CHikCameraMFCDlg : public CDialogEx
 
     // 其他代码...
   private:
-    // 移除原有的单个相机变量，替换为容器
-    CArray<CameraInfo, CameraInfo> m_arrCameras; // 存储所有相机信息
-    int m_nCurrentCameraIndex;                   // 当前操作的相机索引（可选）
+    // 移除原有单相机变量，替换为多相机容器
+    std::vector<CameraInfo> m_cameras; // 相机列表
+    CListCtrl m_cameraList;            // 相机列表控件
+    int m_selectedIndex;               // 当前选中相机索引
 
+    // 保留其他原有成员（布局、抓图等）
     // 抓图相关
     CString m_strCapturePath; // 保存抓图路径
     CString GetCurrentTimeStr();
@@ -70,7 +87,8 @@ class CHikCameraMFCDlg : public CDialogEx
     afx_msg void OnBnClickedBtnLogin();
     afx_msg void OnBnClickedBtnLogout();
     afx_msg void OnLvnItemchangedListCameras(NMHDR *pNMHDR, LRESULT *pResult);
-    afx_msg void OnBnClickedButton1();
     afx_msg void OnBnClickedBtnBatchLogin();
     afx_msg void OnTcnSelchangeTabPreview(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnLvnItemchangedCameraList(NMHDR *pNMHDR, LRESULT *pResult);
+    void AddCamera(CString ip, int port, CString user, CString pwd);
 };

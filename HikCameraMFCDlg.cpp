@@ -48,9 +48,7 @@ END_MESSAGE_MAP()
 
 // 在CHikCameraMFCDlg.cpp的构造函数中初始化（可选，建议初始化）：
 CHikCameraMFCDlg::CHikCameraMFCDlg(CWnd *pParent /*=nullptr*/)
-    : CDialogEx(IDD_HIKCAMERAMFC_DIALOG, pParent), m_lUserID(-1), m_lRealHandle(-1),
-      m_bIsLoggedIn(false), // 初始化未登录
-      m_lPort(-1),          // 初始化播放端口为无效值
+    : CDialogEx(IDD_HIKCAMERAMFC_DIALOG, pParent),
       m_bInitLayout(false)
 {
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -75,9 +73,9 @@ ON_BN_CLICKED(IDCANCEL, &CHikCameraMFCDlg::OnBnClickedCancel)
 ON_BN_CLICKED(IDC_BTN_LOGIN, &CHikCameraMFCDlg::OnBnClickedBtnLogin)
 ON_BN_CLICKED(IDC_BTN_LOGOUT, &CHikCameraMFCDlg::OnBnClickedBtnLogout)
 ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_CAMERAS, &CHikCameraMFCDlg::OnLvnItemchangedListCameras)
-ON_BN_CLICKED(IDC_BUTTON1, &CHikCameraMFCDlg::OnBnClickedButton1)
 ON_BN_CLICKED(IDC_BTN_BATCH_LOGIN, &CHikCameraMFCDlg::OnBnClickedBtnBatchLogin)
 ON_NOTIFY(TCN_SELCHANGE, IDC_TAB_PREVIEW, &CHikCameraMFCDlg::OnTcnSelchangeTabPreview)
+ON_NOTIFY(LVN_ITEMCHANGED, IDC_CAMERA_LIST, &CHikCameraMFCDlg::OnLvnItemchangedCameraList)
 END_MESSAGE_MAP()
 
 // CHikCameraMFCDlg 消息处理程序
@@ -132,23 +130,18 @@ BOOL CHikCameraMFCDlg::OnInitDialog()
 
     // TODO: 在此添加额外的初始化代码
     
-    // 初始化相机列表控件
-    CListCtrl *pList = (CListCtrl *)GetDlgItem(IDC_LIST_CAMERAS);
-    pList->SetExtendedStyle(pList->GetExtendedStyle() | LVS_EX_FULLROWSELECT | // 整行选择
-                            LVS_EX_GRIDLINES);                                 // 网格线
+// 初始化相机列表
+    m_cameraList.SubclassDlgItem(IDC_CAMERA_LIST, this);
+    m_cameraList.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+    m_cameraList.InsertColumn(0, _T("序号"), LVCFMT_LEFT, 50);
+    m_cameraList.InsertColumn(1, _T("IP地址"), LVCFMT_LEFT, 120);
+    m_cameraList.InsertColumn(2, _T("端口"), LVCFMT_LEFT, 60);
+    m_cameraList.InsertColumn(3, _T("状态"), LVCFMT_LEFT, 80);
+    m_cameraList.InsertColumn(4, _T("操作"), LVCFMT_LEFT, 200);
 
-    // 添加列：序号、IP地址、端口、状态、操作
-    pList->InsertColumn(0, _T("序号"), LVCFMT_CENTER, 60);
-    pList->InsertColumn(1, _T("IP地址"), LVCFMT_CENTER, 120);
-    pList->InsertColumn(2, _T("端口"), LVCFMT_CENTER, 80);
-    pList->InsertColumn(3, _T("状态"), LVCFMT_CENTER, 100);
-    pList->InsertColumn(4, _T("操作"), LVCFMT_CENTER, 150);
-
-    // 初始添加几个相机（可从配置文件读取）
-    AddCameraToList(_T("192.168.0.101"), 8000);
-    AddCameraToList(_T("192.168.0.102"), 8000);
-    AddCameraToList(_T("192.168.0.103"), 8000);
-
+    // 添加测试相机（可通过按钮动态添加）
+    AddCamera(_T("192.168.0.101"), 8000, _T("admin"), _T("12345"));
+    AddCamera(_T("192.168.0.102"), 8000, _T("admin"), _T("12345"));
     //
     // 初始化布局变量
     m_bInitLayout = false;
@@ -272,167 +265,168 @@ HCURSOR CHikCameraMFCDlg::OnQueryDragIcon() { return static_cast<HCURSOR>(m_hIco
 // 在HikCameraMFCDlg.cpp文件中添加预览回调函数，用于处理接收到的视频数据：
 void CALLBACK RealDataCallBack(LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void *pUser)
 {
-    // 将pUser转换为对话框指针
-    CHikCameraMFCDlg *pDlg = (CHikCameraMFCDlg *)pUser;
-    if (pDlg == nullptr)
+    CameraInfo *cam = (CameraInfo *)pUser;
+    if (!cam)
         return;
 
     if (dwDataType == NET_DVR_SYSHEAD)
     {
-        // 初始化播放库相关操作，获取播放端口等
-        // 通过对话框指针访问m_nPort成员变量
-        if (!PlayM4_GetPort(&pDlg->m_lPort))
+        if (!PlayM4_GetPort(&cam->playPort))
         {
+            AfxMessageBox(_T("获取播放端口失败！"));
             return;
         }
-        if (!PlayM4_SetStreamOpenMode(pDlg->m_lPort, STREAME_REALTIME))
+        if (!PlayM4_SetStreamOpenMode(cam->playPort, STREAME_REALTIME))
         {
+            PlayM4_FreePort(cam->playPort);
+            cam->playPort = -1;
             return;
         }
-        if (!PlayM4_OpenStream(pDlg->m_lPort, pBuffer, dwBufSize, 1024 * 1024))
+        if (!PlayM4_OpenStream(cam->playPort, pBuffer, dwBufSize, 1024 * 1024))
         {
+            PlayM4_FreePort(cam->playPort);
+            cam->playPort = -1;
             return;
         }
-        // 获取对话框中用于显示视频的Static Text控件句柄
-        CWnd *pWnd = ((CHikCameraMFCDlg *)pUser)->GetDlgItem(IDC_VIDEO_DISPLAY);
-        if (!PlayM4_SetDisplayBuf(pDlg->m_lPort, 15))
+        if (!PlayM4_Play(cam->playPort, cam->displayWnd->m_hWnd))
         {
+            PlayM4_CloseStream(cam->playPort);
+            PlayM4_FreePort(cam->playPort);
+            cam->playPort = -1;
             return;
         }
-        if (!PlayM4_Play(pDlg->m_lPort, pWnd->m_hWnd))
+        if (cam->playPort != -1)
         {
-            return;
+            PlayM4_Stop(cam->playPort);        // 停止播放
+            PlayM4_CloseStream(cam->playPort); // 关闭流
+            PlayM4_FreePort(cam->playPort);    // 释放端口（关键）
+            cam->playPort = -1;
         }
     }
     else if (dwDataType == NET_DVR_STREAMDATA)
     {
-        // 输入视频流数据到播放库进行解码播放
-        PlayM4_InputData(pDlg->m_lPort, pBuffer, dwBufSize);
+        if (cam->playPort != -1)
+        {
+            PlayM4_InputData(cam->playPort, pBuffer, dwBufSize);
+        }
     }
 }
 
 // 在资源视图中，双击 “开始预览” 按钮，自动生成按钮点击事件处理函数，在HikCameraMFCDlg.cpp中实现
 void CHikCameraMFCDlg::OnBnClickedStartPreview()
 {
-    if (m_lUserID < 0 || !m_bIsLoggedIn)
+    m_selectedIndex = m_cameraList.GetSelectionMark();
+    if (m_selectedIndex < 0 || m_selectedIndex >= (int)m_cameras.size())
+        return;
+
+    CameraInfo &cam = m_cameras[m_selectedIndex];
+    if (!cam.isLoggedIn || cam.userID < 0)
     {
-        AfxMessageBox(_T("请先登录相机！"));
+        AfxMessageBox(_T("请先登录相机"));
         return;
     }
 
-    // 声明并初始化 NET_DVR_CLIENTINFO 结构体（与函数参数匹配）
+    // 停止已有预览
+    if (cam.realHandle >= 0)
+    {
+        NET_DVR_StopRealPlay(cam.realHandle);
+    }
+
+    // 配置预览参数
     NET_DVR_CLIENTINFO clientInfo = {0};
-    clientInfo.lChannel = 1;    // 预览通道号（根据相机实际通道调整，通常从1开始）
-    clientInfo.hPlayWnd = NULL; // 设为NULL表示通过回调函数处理视频流（不使用SDK自带窗口）
-    clientInfo.lLinkMode = 0;   // 连接方式：0-TCP（推荐，稳定性高），1-UDP（效率高但可能丢包）
+    clientInfo.lChannel = 1;
+    clientInfo.hPlayWnd = cam.displayWnd->m_hWnd; // 绑定当前相机的显示窗口
+    clientInfo.lLinkMode = 0;
 
-    // 调用 NET_DVR_RealPlay_V30 函数，参数类型完全匹配
-    m_lRealHandle = NET_DVR_RealPlay_V30(m_lUserID,        // 登录句柄（已通过 NET_DVR_Login_V30 获取）
-                                         &clientInfo,      // 结构体指针（NET_DVR_CLIENTINFO* 类型，与函数要求一致）
-                                         RealDataCallBack, // 视频流回调函数（处理实时数据）
-                                         this,             // 用户数据（传递当前对话框指针，供回调函数访问成员）
-                                         TRUE              // 阻塞取流模式（TRUE表示阻塞，FALSE表示非阻塞）
-    );
+    // 启动预览（传递相机信息指针）
+    cam.realHandle = NET_DVR_RealPlay_V30(cam.userID, &clientInfo, RealDataCallBack, &cam, TRUE);
 
-    // 检查预览是否成功
-    if (m_lRealHandle < 0)
+    if (cam.realHandle < 0)
     {
-        DWORD errCode = NET_DVR_GetLastError();
-        CString strErr;
-        strErr.Format(_T("预览启动失败！错误码：%d"), errCode);
-        AfxMessageBox(strErr);
+        CString err;
+        err.Format(_T("预览失败，错误码：%d"), NET_DVR_GetLastError());
+        AfxMessageBox(err);
+        return;
     }
-    else
-    {
-        AfxMessageBox(_T("预览启动成功！"));
-    }
+
+    // 显示窗口并调整大小
+    CRect dispRect;
+    GetDlgItem(IDC_DISPLAY_AREA)->GetClientRect(dispRect); // 假设存在显示区域容器
+    cam.displayWnd->MoveWindow(dispRect);
+    cam.displayWnd->ShowWindow(SW_SHOW);
 }
 
 // 添加 “抓图” 按钮点击事件处理函数，在HikCameraMFCDlg.cpp中实现：
 void CHikCameraMFCDlg::OnBnClickedBtnCapture()
 {
-    // 检查登录状态
-    if (m_lUserID < 0 || !m_bIsLoggedIn)
+    // 1. 检查是否选中相机
+    int nSelected = m_cameraList.GetSelectionMark();
+    if (nSelected < 0 || nSelected >= (int)m_cameras.size())
     {
-        AfxMessageBox(_T("请先登录相机！"));
+        AfxMessageBox(_T("请先在列表中选择一台相机"));
         return;
     }
-    // 1. 设置抓图参数（图片尺寸和质量）
+
+    CameraInfo &cam = m_cameras[nSelected];
+
+    // 2. 检查相机状态（必须已登录且正在预览）
+    if (!cam.isLoggedIn || cam.userID < 0)
+    {
+        AfxMessageBox(_T("请先登录相机"));
+        return;
+    }
+    if (cam.realHandle < 0)
+    {
+        AfxMessageBox(_T("请先启动预览"));
+        return;
+    }
+
+    // 3. 配置抓图参数
     NET_DVR_JPEGPARA jpegPara = {0};
-    jpegPara.wPicSize = 0;    // 0-默认尺寸，1-D1，2-CIF，3-QCIF（根据相机支持调整）
-    jpegPara.wPicQuality = 0; // 0-最好质量，1-较好，2-一般
+    jpegPara.wPicSize = 0;    // 0-默认大小，1-2倍放大，2-4倍放大
+    jpegPara.wPicQuality = 2; // 图像质量（0-最好，1-较好，2-一般）
 
-    // 2. 生成带时间戳的保存路径（避免文件名重复）
-    CString strTime = GetCurrentTimeStr(); // 调用自定义时间函数
-    CString strSavePath;
-    // 保存到项目内capture文件夹，文件名含时间戳
-    strSavePath.Format(_T("./capture/%s.jpg"), (LPCTSTR)strTime);
+    // 4. 获取保存路径（通过文件对话框）
+    CString strFilter = _T("JPEG图像 (*.jpg)|*.jpg|所有文件 (*.*)|*.*||");
+    CFileDialog dlg(FALSE, _T("jpg"), _T("Capture_"), OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, strFilter, this);
 
-    // 3. 转换宽字符路径为窄字符（海康SDK接口要求char*类型）
-    char savePathBuf[MAX_PATH] = {0};
-    WideCharToMultiByte(CP_ACP,              // 代码页（匹配系统ANSI编码）
-                        0,                   // 转换标志
-                        strSavePath,         // 源宽字符串
-                        -1,                  // 自动计算长度（包含终止符）
-                        savePathBuf,         // 目标窄字符缓冲区
-                        sizeof(savePathBuf), // 缓冲区大小
-                        NULL, NULL           // 不使用默认字符
-    );
-
-    // 4. 调用SDK抓图接口（通道号通常从1开始，根据实际设备调整）
-    BOOL bSuccess = NET_DVR_CaptureJPEGPicture(m_lUserID,  // 登录句柄
-                                               1,          // 通道号（与预览通道一致）
-                                               &jpegPara,  // 抓图参数结构体
-                                               savePathBuf // 保存路径（char*类型）
-    );
-
-    // 5. 处理抓图结果
-    if (bSuccess)
+    if (dlg.DoModal() != IDOK)
     {
-        CString strMsg;
-        strMsg.Format(_T("抓图成功！\n保存路径：%s"), (LPCTSTR)strSavePath);
-        AfxMessageBox(strMsg);
-        // 可选：更新界面显示抓图信息（如IDC_STATIC_CAPTURE_INFO）
-        SetDlgItemText(IDC_STATIC_CAPTURE_INFO, _T("最近抓图：") + strSavePath);
+        return; // 用户取消保存
     }
-    else
+    CString strSavePath = dlg.GetPathName();
+
+    // 将CString转换为char*
+    int nLen = WideCharToMultiByte(CP_ACP, 0, strSavePath, -1, NULL, 0, NULL, NULL);
+    char *pSavePath = new char[nLen];
+    WideCharToMultiByte(CP_ACP, 0, strSavePath, -1, pSavePath, nLen, NULL, NULL);
+
+    // 5. 调用SDK抓图接口（注意：通道号通常从1开始）
+    BOOL bRet = NET_DVR_CaptureJPEGPicture(cam.userID, 1, &jpegPara, pSavePath);
+
+    // 释放内存
+    delete[] pSavePath;
+
+    // 处理抓图结果
+    if (!bRet)
     {
-        // 抓图失败，获取错误码
-        DWORD dwErr = NET_DVR_GetLastError();
+        // 抓图失败，显示错误码
         CString strErr;
-        strErr.Format(_T("抓图失败！错误码：%d"), dwErr);
+        strErr.Format(_T("抓图失败！错误码: %d"), NET_DVR_GetLastError());
         AfxMessageBox(strErr);
+        return;
     }
+
+    // 6. 抓图成功提示
+    CString strMsg;
+    strMsg.Format(_T("抓图成功！\n保存路径: %s"), strSavePath);
+    AfxMessageBox(strMsg);
 }
 
 // 在对话框关闭时，需要释放 SDK 资源，在对话框类的OnCancel函数（位于HikCameraMFCDlg.cpp）中添加以下代码：
 void CHikCameraMFCDlg::OnCancel()
 {
-    // 若已登录，先注销
-    if (m_bIsLoggedIn)
-    {
-        OnBnClickedBtnLogout(); // 调用注销函数
-    }
-    // 停止预览
-    if (m_lRealHandle >= 0)
-    {
-        NET_DVR_StopRealPlay(m_lRealHandle);
-    }
-    // 退出登录
-    if (m_lUserID >= 0)
-    {
-        NET_DVR_Logout(m_lUserID);
-    }
-    // 清理SDK
-    NET_DVR_Cleanup();
-    // 关闭播放库端口（如果使用了播放库）
-    if (m_lPort >= 0)
-    {
-        PlayM4_Stop(m_lPort);
-        PlayM4_CloseStream(m_lPort);
-        PlayM4_FreePort(m_lPort);
-    }
-    CDialogEx::OnCancel();
+
 }
 
 void CHikCameraMFCDlg::OnBnClickedNo()
@@ -470,94 +464,56 @@ void CHikCameraMFCDlg::OnBnClickedCancel()
 void CHikCameraMFCDlg::OnBnClickedBtnLogin()
 {
     // TODO: 在此添加控件通知处理程序代码
-    // 若已登录，直接返回
-    if (m_bIsLoggedIn)
+    m_selectedIndex = m_cameraList.GetSelectionMark();
+    if (m_selectedIndex < 0 || m_selectedIndex >= (int)m_cameras.size())
     {
-        AfxMessageBox(_T("已登录，无需重复操作！"));
+        AfxMessageBox(_T("请先选择相机"));
         return;
     }
 
-    // 获取界面输入的登录信息
-    CString strIP, strPort, strUser, strPwd;
-    GetDlgItemText(IDC_EDIT_IP, strIP);
-    GetDlgItemText(IDC_EDIT_PORT, strPort);
-    GetDlgItemText(IDC_EDIT_USERNAME, strUser);
-    GetDlgItemText(IDC_EDIT_PASSWORD, strPwd);
-
-    // 简单校验输入
-    if (strIP.IsEmpty() || strPort.IsEmpty() || strUser.IsEmpty())
-    {
-        AfxMessageBox(_T("IP、端口和用户名不能为空！"));
-        return;
-    }
-
-    // 转换为海康SDK需要的C字符串（宽字符转窄字符）
-    char ip[16] = {0}, user[32] = {0}, pwd[32] = {0};
-    int port = _ttoi(strPort);
-    WideCharToMultiByte(CP_ACP, 0, strIP, -1, ip, sizeof(ip), NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, strUser, -1, user, sizeof(user), NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, strPwd, -1, pwd, sizeof(pwd), NULL, NULL);
-
-    // 调用海康SDK登录接口
+    CameraInfo &cam = m_cameras[m_selectedIndex];
     NET_DVR_DEVICEINFO_V30 deviceInfo = {0};
-    m_lUserID = NET_DVR_Login_V30(ip, port, user, pwd, &deviceInfo);
+    cam.userID = NET_DVR_Login_V30(cam.ip, cam.port, cam.username, cam.password, &deviceInfo);
 
-    // 处理登录结果
-    if (m_lUserID < 0)
+    if (cam.userID < 0)
     {
-        DWORD err = NET_DVR_GetLastError();
-        CString errMsg;
-        errMsg.Format(_T("登录失败！错误码：%d"), err);
-        AfxMessageBox(errMsg);
-        SetDlgItemText(IDC_STATIC_STATUS, _T("登录失败"));
+        CString err;
+        err.Format(_T("登录失败，错误码：%d"), NET_DVR_GetLastError());
+        AfxMessageBox(err);
         return;
     }
 
-    // 登录成功：更新状态和控件
-    m_bIsLoggedIn = true;
-    SetDlgItemText(IDC_STATIC_STATUS, _T("已登录"));
-    GetDlgItem(IDC_BTN_LOGIN)->EnableWindow(FALSE); // 禁用登录按钮
-    GetDlgItem(IDC_BTN_LOGOUT)->EnableWindow(TRUE); // 启用注销按钮
-    // 可选：禁用输入框（防止登录后修改）
-    GetDlgItem(IDC_EDIT_IP)->EnableWindow(FALSE);
-    GetDlgItem(IDC_EDIT_PORT)->EnableWindow(FALSE);
-    GetDlgItem(IDC_EDIT_USERNAME)->EnableWindow(FALSE);
-    GetDlgItem(IDC_EDIT_PASSWORD)->EnableWindow(FALSE);
-    AfxMessageBox(_T("登录成功！"));
+    cam.isLoggedIn = true;
+    UpdateCameraList();
+    AfxMessageBox(_T("登录成功"));
 }
 
 void CHikCameraMFCDlg::OnBnClickedBtnLogout()
 {
     // TODO: 在此添加控件通知处理程序代码
-    // 若未登录，直接返回
-    if (!m_bIsLoggedIn)
-    {
-        AfxMessageBox(_T("未登录，无需注销！"));
+    m_selectedIndex = m_cameraList.GetSelectionMark();
+    if (m_selectedIndex < 0 || m_selectedIndex >= (int)m_cameras.size())
         return;
-    }
 
-    // 停止预览（如果正在预览）
-    if (m_lRealHandle >= 0)
+    CameraInfo &cam = m_cameras[m_selectedIndex];
+    if (cam.realHandle >= 0)
     {
-        NET_DVR_StopRealPlay(m_lRealHandle);
-        m_lRealHandle = -1;
+        NET_DVR_StopRealPlay(cam.realHandle); // 先停止预览
+        cam.realHandle = -1;
     }
-
-    // 调用海康SDK注销接口
-    NET_DVR_Logout(m_lUserID);
-    m_lUserID = -1; // 重置登录句柄
-
-    // 更新状态和控件
-    m_bIsLoggedIn = false;
-    SetDlgItemText(IDC_STATIC_STATUS, _T("未登录"));
-    GetDlgItem(IDC_BTN_LOGIN)->EnableWindow(TRUE);   // 启用登录按钮
-    GetDlgItem(IDC_BTN_LOGOUT)->EnableWindow(FALSE); // 禁用注销按钮
-    // 启用输入框（允许重新输入）
-    GetDlgItem(IDC_EDIT_IP)->EnableWindow(TRUE);
-    GetDlgItem(IDC_EDIT_PORT)->EnableWindow(TRUE);
-    GetDlgItem(IDC_EDIT_USERNAME)->EnableWindow(TRUE);
-    GetDlgItem(IDC_EDIT_PASSWORD)->EnableWindow(TRUE);
-    AfxMessageBox(_T("注销成功！"));
+    if (cam.userID >= 0)
+    {
+        NET_DVR_Logout(cam.userID); // 注销登录
+        cam.userID = -1;
+    }
+    if (cam.playPort != -1)
+    {
+        PlayM4_ReleasePort(cam.playPort); // 释放播放端口
+        cam.playPort = -1;
+    }
+    cam.isLoggedIn = false;
+    cam.displayWnd->ShowWindow(SW_HIDE); // 隐藏显示窗口
+    UpdateCameraList();
 }
 
 // 生成带时间戳的字符串（用于抓图文件名）
@@ -709,5 +665,84 @@ bool CHikCameraMFCDlg::LoginCamera(int nIndex)
 void CHikCameraMFCDlg::OnTcnSelchangeTabPreview(NMHDR *pNMHDR, LRESULT *pResult)
 {
     // TODO: 在此添加控件通知处理程序代码
+    *pResult = 0;
+}
+void CHikCameraMFCDlg::AddCamera(CString ip, int port, CString user, CString pwd)
+{
+    CameraInfo cam;
+    cam.ip = ip;
+    cam.port = port;
+    cam.username = user;
+    cam.password = pwd;
+    cam.userID = -1;
+    cam.realHandle = -1;
+    cam.playPort = -1;
+    cam.isLoggedIn = false;
+    cam.listIndex = m_cameras.size();
+
+    // 创建显示窗口（隐藏状态，预览时显示）
+    CStatic *pWnd = new CStatic();
+    pWnd->Create(_T(""), WS_CHILD | WS_VISIBLE | SS_WINDOWEDGE, CRect(0, 0, 0, 0), this,
+                 IDC_VIDEO_DISPLAY + m_cameras.size());
+    pWnd->ShowWindow(SW_HIDE);
+    cam.displayWnd = pWnd;
+
+    m_cameras.push_back(cam);
+    UpdateCameraList(); // 更新列表显示
+}
+
+// 更新列表显示
+void CHikCameraMFCDlg::UpdateCameraList()
+{
+    m_cameraList.DeleteAllItems();
+    for (size_t i = 0; i < m_cameras.size(); i++)
+    {
+        CString indexStr;
+        indexStr.Format(_T("%d"), i + 1);
+        m_cameraList.InsertItem(i, indexStr);
+        m_cameraList.SetItemText(i, 1, m_cameras[i].ip);
+
+        CString portStr;
+        portStr.Format(_T("%d"), m_cameras[i].port);
+        m_cameraList.SetItemText(i, 2, portStr);
+
+        m_cameraList.SetItemText(i, 3, m_cameras[i].isLoggedIn ? _T("已登录") : _T("未登录"));
+        m_cameraList.SetItemText(i, 4, _T("登录 | 预览 | 注销"));
+    }
+}
+
+
+CHikCameraMFCDlg::~CHikCameraMFCDlg()
+{
+    // 释放所有相机资源
+    for (auto &cam : m_cameras)
+    {
+        if (cam.realHandle >= 0)
+            NET_DVR_StopRealPlay(cam.realHandle);
+        if (cam.userID >= 0)
+            NET_DVR_Logout(cam.userID);
+        if (cam.playPort != -1)
+        {
+            PlayM4_Stop(cam.playPort);
+            PlayM4_CloseStream(cam.playPort);
+            PlayM4_ReleasePort(cam.playPort);
+        }
+        if (cam.displayWnd)
+        {
+            delete cam.displayWnd;
+            cam.displayWnd = nullptr;
+        }
+    }
+    m_cameras.clear();
+    NET_DVR_Cleanup(); // 清理SDK
+}
+
+afx_msg  void OnLvnItemchangedCameraList(NMHDR *pNMHDR, LRESULT *pResult)
+{
+    LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+    if (pNMLV->uNewState & LVIS_SELECTED)
+    {
+        m_selectedIndex = pNMLV->iItem;
+    }
     *pResult = 0;
 }
