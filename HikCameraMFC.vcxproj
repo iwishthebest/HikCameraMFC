@@ -89,6 +89,8 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>.\bin\</OutDir>
     <IntDir>.\Debug\</IntDir>
+    <IncludePath>D:\nozdi\Desktop\HikCameraMFC\include;D:\ProgramData\opencv\build\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\nozdi\Desktop\HikCameraMFC\bin;D:\ProgramData\opencv\build\x64\vc16\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -183,7 +185,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>.\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <OutputFile>.\bin\HikCameraMFC.exe</OutputFile>
-      <AdditionalDependencies>HCNetSDK.lib;PlayCtrl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world4110.lib;HCNetSDK.lib;PlayM4.lib;PlayCtrl.lib;VideoSDK.lib;HCCore.lib;GdiPlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Midl>
@@ -196,26 +198,35 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\CH-HCNetSDKV6.1.9.48\headers\HCNetSDK.h" />
+    <ClInclude Include="ControlPanel.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="HikCameraMFC.h" />
     <ClInclude Include="HikCameraMFCDlg.h" />
-    <ClInclude Include="include\PlayM4.h" />
+    <ClInclude Include="InfoPanel.h" />
+    <ClInclude Include="LogView.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="VideoView.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ControlPanel.cpp" />
     <ClCompile Include="HikCameraMFC.cpp" />
     <ClCompile Include="HikCameraMFCDlg.cpp" />
+    <ClCompile Include="InfoPanel.cpp" />
+    <ClCompile Include="LogView.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="VideoView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="HikCameraMFC.rc" />

@@ -2,12 +2,15 @@
 
 #include "pch.h"          // 预编译头文件，通常包含 framework.h
 #include "framework.h"    // MFC框架头文件
-#include <string>          // 标准库头文件
+#include <string>         // 标准库头文件
 #include "HCNetSDK.h"     // 第三方库头文件，海康SDK
 #include "PlayM4.h"       // 第三方库头文件，播放库
 #include "HikCameraMFC.h" // 项目特定头文件
 #include "HikCameraMFCDlg.h" // 项目特定头文件，主对话框类
 #include "afxdialogex.h"    // MFC对话框扩展类头文件
+
+// #include <afxlayout.h>
+// #include <afxlayoutmfc.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -48,7 +51,7 @@ END_MESSAGE_MAP()
 
 // 在CHikCameraMFCDlg.cpp的构造函数中初始化（可选，建议初始化）：
 CHikCameraMFCDlg::CHikCameraMFCDlg(CWnd *pParent /*=nullptr*/)
-    : CDialogEx(IDD_HIKCAMERAMFC_DIALOG, pParent), m_bInitLayout(false), m_selectedIndex(-1) // 初始化为-1表示未选择
+    : CDialogEx(IDD_MAIN_DIALOG, pParent), m_bInitLayout(false), m_selectedIndex(-1) // 初始化为-1表示未选择
 {
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -63,117 +66,142 @@ ON_WM_QUERYDRAGICON()
 
 ON_BN_CLICKED(IDNO, &CHikCameraMFCDlg::OnBnClickedNo)
 // 添加以下行：关联按钮ID和处理函数
-ON_BN_CLICKED(IDC_BTN_START_PREVIEW, &CHikCameraMFCDlg::OnBnClickedStartPreview)
-ON_BN_CLICKED(IDC_BTN_CAPTURE, &CHikCameraMFCDlg::OnBnClickedBtnCapture) // 自动生成的映射
-ON_EN_CHANGE(IDC_EDIT_IP, &CHikCameraMFCDlg::OnEnChangeEditIp)
 ON_STN_CLICKED(IDC_VIDEO_DISPLAY, &CHikCameraMFCDlg::OnStnClickedVideoDisplay)
 ON_BN_CLICKED(IDOK, &CHikCameraMFCDlg::OnBnClickedOk)
 ON_BN_CLICKED(IDCANCEL, &CHikCameraMFCDlg::OnBnClickedCancel)
-ON_BN_CLICKED(IDC_BTN_LOGIN, &CHikCameraMFCDlg::OnBnClickedBtnLogin)
-ON_BN_CLICKED(IDC_BTN_LOGOUT, &CHikCameraMFCDlg::OnBnClickedBtnLogout)
-ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_CAMERAS, &CHikCameraMFCDlg::OnLvnItemchangedListCameras)
-ON_BN_CLICKED(IDC_BTN_BATCH_LOGIN, &CHikCameraMFCDlg::OnBnClickedBtnBatchLogin)
-ON_NOTIFY(TCN_SELCHANGE, IDC_TAB_PREVIEW, &CHikCameraMFCDlg::OnTcnSelchangeTabPreview)
 ON_NOTIFY(LVN_ITEMCHANGED, IDC_CAMERA_LIST, &CHikCameraMFCDlg::OnLvnItemchangedCameraList)
 END_MESSAGE_MAP()
 
 // CHikCameraMFCDlg 消息处理程序
 
+// BOOL CHikCameraMFCDlg::OnInitDialog()
+//{
+//     CDialogEx::OnInitDialog();
+//
+//     // 初始禁用注销按钮
+//     GetDlgItem(IDC_BTN_LOGOUT)->EnableWindow(FALSE);
+//
+//     // 设置IDC_EDIT_IP的默认值
+//     SetDlgItemText(IDC_EDIT_IP, _T("192.168.0.101")); // 使用_T宏确保 Unicode 兼容性
+//     SetDlgItemText(IDC_EDIT_PORT, _T("8000"));        // 海康默认端口
+//     SetDlgItemText(IDC_EDIT_USERNAME, _T("admin"));
+//     SetDlgItemText(IDC_EDIT_PASSWORD, _T("fkqxk010"));
+//
+//     // 初始化SDK
+//     if (!NET_DVR_Init())
+//     {
+//         AfxMessageBox(_T("SDK初始化失败！错误码：") + CString(std::to_string(NET_DVR_GetLastError()).c_str()));
+//         return FALSE;
+//     }
+//     // 设置连接超时和重连
+//     NET_DVR_SetConnectTime(2000, 1);
+//     NET_DVR_SetReconnect(10000, TRUE);
+//
+//     // 将“关于...”菜单项添加到系统菜单中。
+//
+//     // IDM_ABOUTBOX 必须在系统命令范围内。
+//     ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
+//     ASSERT(IDM_ABOUTBOX < 0xF000);
+//
+//     CMenu *pSysMenu = GetSystemMenu(FALSE);
+//     if (pSysMenu != nullptr)
+//     {
+//         BOOL bNameValid;
+//         CString strAboutMenu;
+//         bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
+//         ASSERT(bNameValid);
+//         if (!strAboutMenu.IsEmpty())
+//         {
+//             pSysMenu->AppendMenu(MF_SEPARATOR);
+//             pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
+//         }
+//     }
+//
+//     // 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
+//     //  执行此操作
+//     SetIcon(m_hIcon, TRUE);  // 设置大图标
+//     SetIcon(m_hIcon, FALSE); // 设置小图标
+//
+//     // TODO: 在此添加额外的初始化代码
+//
+//     // 初始化相机列表
+//     m_cameraList.SubclassDlgItem(IDC_CAMERA_LIST, this);
+//     m_cameraList.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+//     m_cameraList.InsertColumn(0, _T("序号"), LVCFMT_LEFT, 50);
+//     m_cameraList.InsertColumn(1, _T("IP地址"), LVCFMT_LEFT, 120);
+//     m_cameraList.InsertColumn(2, _T("端口"), LVCFMT_LEFT, 60);
+//     m_cameraList.InsertColumn(3, _T("状态"), LVCFMT_LEFT, 80);
+//     m_cameraList.InsertColumn(4, _T("操作"), LVCFMT_LEFT, 200);
+//
+//     // 添加测试相机（可通过按钮动态添加）
+//     AddCamera(_T("192.168.0.101"), 8000, _T("admin"), _T("12345"));
+//     AddCamera(_T("192.168.0.102"), 8000, _T("admin"), _T("12345"));
+//     //
+//     // 初始化布局变量
+//     m_bInitLayout = false;
+//     GetClientRect(m_rectOrigDlg); // 记录对话框初始大小
+//
+//     // 所有需要调整的控件ID（参考Resource.h）
+//     UINT arrCtrlIDs[] = {
+//         IDC_EDIT_IP,           IDC_EDIT_PORT,   IDC_EDIT_USERNAME, IDC_EDIT_PASSWORD, IDC_VIDEO_DISPLAY,
+//         IDC_BTN_START_PREVIEW, IDC_BTN_CAPTURE, IDC_BTN_LOGIN,     IDC_BTN_LOGOUT,    IDC_STATIC1,
+//         IDC_STATIC2,           IDC_STATIC3,     IDC_STATIC4,       IDC_STATIC_STATUS, IDC_STATIC_CAPTURE_INFO};
+//     int nCtrlCount = sizeof(arrCtrlIDs) / sizeof(UINT);
+//
+//     // 记录每个控件的初始位置和大小（客户区坐标）
+//     for (int i = 0; i < nCtrlCount; i++)
+//     {
+//         CWnd *pCtrl = GetDlgItem(arrCtrlIDs[i]);
+//         if (pCtrl && pCtrl->GetSafeHwnd())
+//         {
+//             CRect rectCtrl;
+//             pCtrl->GetWindowRect(rectCtrl);
+//             ScreenToClient(rectCtrl); // 转换为对话框客户区坐标
+//             m_mapCtrlOrigRect.SetAt(arrCtrlIDs[i], rectCtrl);
+//         }
+//     }
+//
+//     m_bInitLayout = true;
+//
+//     return TRUE; // 除非将焦点设置到控件，否则返回 TRUE
+// }
+
+// new
 BOOL CHikCameraMFCDlg::OnInitDialog()
 {
     CDialogEx::OnInitDialog();
 
-    // 初始禁用注销按钮
-    GetDlgItem(IDC_BTN_LOGOUT)->EnableWindow(FALSE);
+    // 设置窗口大小
+    SetWindowPos(NULL, 0, 0, 1280, 768, SWP_NOMOVE | SWP_NOZORDER);
 
-    // 设置IDC_EDIT_IP的默认值
-    SetDlgItemText(IDC_EDIT_IP, _T("192.168.0.101")); // 使用_T宏确保 Unicode 兼容性
-    SetDlgItemText(IDC_EDIT_PORT, _T("8000"));        // 海康默认端口
-    SetDlgItemText(IDC_EDIT_USERNAME, _T("admin"));
-    SetDlgItemText(IDC_EDIT_PASSWORD, _T("fkqxk010"));
+    // 创建主分割器 (1行2列)
+    m_mainSplitter.CreateStatic(this, 1, 2);
 
-    // 初始化SDK
-    if (!NET_DVR_Init())
-    {
-        AfxMessageBox(_T("SDK初始化失败！错误码：") + CString(std::to_string(NET_DVR_GetLastError()).c_str()));
-        return FALSE;
-    }
-    // 设置连接超时和重连
-    NET_DVR_SetConnectTime(2000, 1);
-    NET_DVR_SetReconnect(10000, TRUE);
+    // 左侧：视频显示区 (70%)
+    CRect rect;
+    GetClientRect(&rect);
+    m_mainSplitter.CreateView(0, 0, RUNTIME_CLASS(CVideoView), CSize(rect.Width() * 0.7, 0), NULL);
 
-    // 将“关于...”菜单项添加到系统菜单中。
+    // 右侧：控制面板和信息面板分割器
+    m_rightSplitter.CreateStatic(&m_mainSplitter, 2, 1, WS_CHILD | WS_VISIBLE, m_mainSplitter.IdFromRowCol(0, 1));
 
-    // IDM_ABOUTBOX 必须在系统命令范围内。
-    ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
-    ASSERT(IDM_ABOUTBOX < 0xF000);
+    // 控制面板 (60%高度)
+    m_rightSplitter.CreateView(0, 0, RUNTIME_CLASS(CControlPanel), CSize(0, rect.Height() * 0.6), NULL);
 
-    CMenu *pSysMenu = GetSystemMenu(FALSE);
-    if (pSysMenu != nullptr)
-    {
-        BOOL bNameValid;
-        CString strAboutMenu;
-        bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
-        ASSERT(bNameValid);
-        if (!strAboutMenu.IsEmpty())
-        {
-            pSysMenu->AppendMenu(MF_SEPARATOR);
-            pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
-        }
-    }
+    // 信息面板 (40%高度)
+    m_rightSplitter.CreateView(1, 0, RUNTIME_CLASS(CInfoPanel), CSize(0, 0), NULL);
 
-    // 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
-    //  执行此操作
-    SetIcon(m_hIcon, TRUE);  // 设置大图标
-    SetIcon(m_hIcon, FALSE); // 设置小图标
+    // 创建日志视图 (底部固定高度)
+    m_logView.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | LVS_REPORT,
+                     CRect(0, rect.Height() - 150, rect.Width(), rect.Height()), this, IDC_LOG_VIEW);
+    m_logView.Initialize();
 
-    // TODO: 在此添加额外的初始化代码
-
-    // 初始化相机列表
-    m_cameraList.SubclassDlgItem(IDC_CAMERA_LIST, this);
-    m_cameraList.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-    m_cameraList.InsertColumn(0, _T("序号"), LVCFMT_LEFT, 50);
-    m_cameraList.InsertColumn(1, _T("IP地址"), LVCFMT_LEFT, 120);
-    m_cameraList.InsertColumn(2, _T("端口"), LVCFMT_LEFT, 60);
-    m_cameraList.InsertColumn(3, _T("状态"), LVCFMT_LEFT, 80);
-    m_cameraList.InsertColumn(4, _T("操作"), LVCFMT_LEFT, 200);
-
-    // 添加测试相机（可通过按钮动态添加）
-    AddCamera(_T("192.168.0.101"), 8000, _T("admin"), _T("12345"));
-    AddCamera(_T("192.168.0.102"), 8000, _T("admin"), _T("12345"));
-    //
-    // 初始化布局变量
-    m_bInitLayout = false;
-    GetClientRect(m_rectOrigDlg); // 记录对话框初始大小
-
-    // 所有需要调整的控件ID（参考Resource.h）
-    UINT arrCtrlIDs[] = {
-        IDC_EDIT_IP,           IDC_EDIT_PORT,   IDC_EDIT_USERNAME, IDC_EDIT_PASSWORD, IDC_VIDEO_DISPLAY,
-        IDC_BTN_START_PREVIEW, IDC_BTN_CAPTURE, IDC_BTN_LOGIN,     IDC_BTN_LOGOUT,    IDC_STATIC1,
-        IDC_STATIC2,           IDC_STATIC3,     IDC_STATIC4,       IDC_STATIC_STATUS, IDC_STATIC_CAPTURE_INFO};
-    int nCtrlCount = sizeof(arrCtrlIDs) / sizeof(UINT);
-
-    // 记录每个控件的初始位置和大小（客户区坐标）
-    for (int i = 0; i < nCtrlCount; i++)
-    {
-        CWnd *pCtrl = GetDlgItem(arrCtrlIDs[i]);
-        if (pCtrl && pCtrl->GetSafeHwnd())
-        {
-            CRect rectCtrl;
-            pCtrl->GetWindowRect(rectCtrl);
-            ScreenToClient(rectCtrl); // 转换为对话框客户区坐标
-            m_mapCtrlOrigRect.SetAt(arrCtrlIDs[i], rectCtrl);
-        }
-    }
-
-    m_bInitLayout = true;
-
-    return TRUE; // 除非将焦点设置到控件，否则返回 TRUE
+    return TRUE;
 }
 
 void CHikCameraMFCDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
-    if ((nID & 0xFFF0) == IDM_ABOUTBOX)
+    if ((nID & 0xFFF0) == IDD_ABOUTBOX)
     {
         CAboutDlg dlgAbout;
         dlgAbout.DoModal();
@@ -213,46 +241,73 @@ void CHikCameraMFCDlg::OnPaint()
     }
 }
 
+// void CHikCameraMFCDlg::OnSize(UINT nType, int cx, int cy)
+//{
+//     CDialogEx::OnSize(nType, cx, cy);
+//
+//     // 跳过初始化阶段或窗口最小化的情况
+//     if (!m_bInitLayout || nType == SIZE_MINIMIZED)
+//         return;
+//
+//     // 计算宽高缩放比例（相对于初始大小）
+//     double dScaleX = (double)cx / m_rectOrigDlg.Width();
+//     double dScaleY = (double)cy / m_rectOrigDlg.Height();
+//
+//     // 遍历所有控件，按比例调整
+//     POSITION pos = m_mapCtrlOrigRect.GetStartPosition();
+//     while (pos)
+//     {
+//         UINT nCtrlID;
+//         CRect rectOrig;
+//         m_mapCtrlOrigRect.GetNextAssoc(pos, nCtrlID, rectOrig);
+//
+//         CWnd *pCtrl = GetDlgItem(nCtrlID);
+//         if (pCtrl && pCtrl->GetSafeHwnd())
+//         {
+//             // 计算新位置和大小（四舍五入）
+//             int nNewLeft = (int)(rectOrig.left * dScaleX);
+//             int nNewTop = (int)(rectOrig.top * dScaleY);
+//             int nNewWidth = (int)(rectOrig.Width() * dScaleX);
+//             int nNewHeight = (int)(rectOrig.Height() * dScaleY);
+//
+//             // 特殊处理视频显示区域（让其占更大空间）
+//             if (nCtrlID == IDC_VIDEO_DISPLAY)
+//             {
+//                 nNewLeft = 20;         // 左边距20px
+//                 nNewTop = 20;          // 上边距20px
+//                 nNewWidth = cx - 40;   // 右边距20px
+//                 nNewHeight = cy - 120; // 底部预留120px给按钮和状态
+//             }
+//
+//             // 调整控件位置和大小
+//             pCtrl->MoveWindow(nNewLeft, nNewTop, nNewWidth, nNewHeight);
+//         }
+//     }
+// }
+
+// new
 void CHikCameraMFCDlg::OnSize(UINT nType, int cx, int cy)
 {
     CDialogEx::OnSize(nType, cx, cy);
 
-    // 跳过初始化阶段或窗口最小化的情况
-    if (!m_bInitLayout || nType == SIZE_MINIMIZED)
-        return;
-
-    // 计算宽高缩放比例（相对于初始大小）
-    double dScaleX = (double)cx / m_rectOrigDlg.Width();
-    double dScaleY = (double)cy / m_rectOrigDlg.Height();
-
-    // 遍历所有控件，按比例调整
-    POSITION pos = m_mapCtrlOrigRect.GetStartPosition();
-    while (pos)
+    if (nType != SIZE_MINIMIZED && cx > 0 && cy > 0)
     {
-        UINT nCtrlID;
-        CRect rectOrig;
-        m_mapCtrlOrigRect.GetNextAssoc(pos, nCtrlID, rectOrig);
-
-        CWnd *pCtrl = GetDlgItem(nCtrlID);
-        if (pCtrl && pCtrl->GetSafeHwnd())
+        // 调整主分割器
+        if (m_mainSplitter.GetSafeHwnd())
         {
-            // 计算新位置和大小（四舍五入）
-            int nNewLeft = (int)(rectOrig.left * dScaleX);
-            int nNewTop = (int)(rectOrig.top * dScaleY);
-            int nNewWidth = (int)(rectOrig.Width() * dScaleX);
-            int nNewHeight = (int)(rectOrig.Height() * dScaleY);
+            m_mainSplitter.SetWindowPos(NULL, 0, 0, cx, cy - 150, SWP_NOZORDER);
+        }
 
-            // 特殊处理视频显示区域（让其占更大空间）
-            if (nCtrlID == IDC_VIDEO_DISPLAY)
-            {
-                nNewLeft = 20;         // 左边距20px
-                nNewTop = 20;          // 上边距20px
-                nNewWidth = cx - 40;   // 右边距20px
-                nNewHeight = cy - 120; // 底部预留120px给按钮和状态
-            }
+        // 调整日志视图
+        if (m_logView.GetSafeHwnd())
+        {
+            m_logView.SetWindowPos(NULL, 0, cy - 150, cx, 150, SWP_NOZORDER);
+        }
 
-            // 调整控件位置和大小
-            pCtrl->MoveWindow(nNewLeft, nNewTop, nNewWidth, nNewHeight);
+        // 调整状态栏
+        if (m_statusBar.GetSafeHwnd())
+        {
+            m_statusBar.SetWindowPos(NULL, 0, cy - 24, cx, 24, SWP_NOZORDER);
         }
     }
 }
@@ -350,7 +405,7 @@ void CHikCameraMFCDlg::OnBnClickedStartPreview()
 
     // 显示窗口并调整大小
     CRect dispRect;
-    GetDlgItem(IDC_DISPLAY_AREA)->GetClientRect(dispRect); // 假设存在显示区域容器
+    //GetDlgItem(IDC_DISPLAY_AREA)->GetClientRect(dispRect); // 假设存在显示区域容器
     cam.displayWnd->MoveWindow(dispRect);
     cam.displayWnd->ShowWindow(SW_SHOW);
 }
@@ -603,9 +658,9 @@ void CHikCameraMFCDlg::OnLvnItemchangedListCameras(NMHDR *pNMHDR, LRESULT *pResu
             CameraInfo *cam = GetSelectedCamera();
             if (cam)
             {
-                GetDlgItem(IDC_BTN_LOGIN)->EnableWindow(!cam->isLoggedIn);
-                GetDlgItem(IDC_BTN_LOGOUT)->EnableWindow(cam->isLoggedIn);
-                GetDlgItem(IDC_BTN_START_PREVIEW)->EnableWindow(cam->isLoggedIn);
+                //GetDlgItem(IDC_BTN_LOGIN)->EnableWindow(!cam->isLoggedIn);
+                //GetDlgItem(IDC_BTN_LOGOUT)->EnableWindow(cam->isLoggedIn);
+                //GetDlgItem(IDC_BTN_START_PREVIEW)->EnableWindow(cam->isLoggedIn);
             }
         }
         else
@@ -617,49 +672,49 @@ void CHikCameraMFCDlg::OnLvnItemchangedListCameras(NMHDR *pNMHDR, LRESULT *pResu
     *pResult = 0;
 }
 
-void CHikCameraMFCDlg::OnNMClickListCameras(NMHDR *pNMHDR, LRESULT *pResult)
-{
-    LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-
-    CListCtrl *pList = (CListCtrl *)GetDlgItem(IDC_LIST_CAMERAS);
-    int nItem = pNMItemActivate->iItem;       // 点击的行索引
-    int nSubItem = pNMItemActivate->iSubItem; // 点击的列索引
-
-    // 只处理"操作"列（索引4）的点击
-    if (nItem >= 0 && nSubItem == 4)
-    {
-        // 获取点击位置的坐标
-        CPoint pt(pNMItemActivate->ptAction);
-        pList->ScreenToClient(&pt);
-
-        // 获取"操作"列的文本范围
-        CRect rect;
-        pList->GetSubItemRect(nItem, 4, LVIR_LABEL, rect);
-
-        if (rect.PtInRect(pt))
-        {
-            // 判断点击的是"登录"还是"预览"
-            CString strText = pList->GetItemText(nItem, 4);
-            int nLoginPos = strText.Find(_T("登录"));
-            int nPreviewPos = strText.Find(_T("预览"));
-
-            // 计算文本区域（简单判断左右区域）
-            int nSplit = rect.left + rect.Width() / 2;
-            if (pt.x < nSplit && nLoginPos != -1)
-            {
-                // 点击"登录"
-                LoginCamera(nItem);
-            }
-            else if (pt.x >= nSplit && nPreviewPos != -1)
-            {
-                // 点击"预览"
-                // OnCameraPreview(nItem);
-            }
-        }
-    }
-
-    *pResult = 0;
-}
+//void CHikCameraMFCDlg::OnNMClickListCameras(NMHDR *pNMHDR, LRESULT *pResult)
+//{
+//    LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+//
+//    CListCtrl *pList = (CListCtrl *)GetDlgItem(IDC_LIST_CAMERAS);
+//    int nItem = pNMItemActivate->iItem;       // 点击的行索引
+//    int nSubItem = pNMItemActivate->iSubItem; // 点击的列索引
+//
+//    // 只处理"操作"列（索引4）的点击
+//    if (nItem >= 0 && nSubItem == 4)
+//    {
+//        // 获取点击位置的坐标
+//        CPoint pt(pNMItemActivate->ptAction);
+//        pList->ScreenToClient(&pt);
+//
+//        // 获取"操作"列的文本范围
+//        CRect rect;
+//        pList->GetSubItemRect(nItem, 4, LVIR_LABEL, rect);
+//
+//        if (rect.PtInRect(pt))
+//        {
+//            // 判断点击的是"登录"还是"预览"
+//            CString strText = pList->GetItemText(nItem, 4);
+//            int nLoginPos = strText.Find(_T("登录"));
+//            int nPreviewPos = strText.Find(_T("预览"));
+//
+//            // 计算文本区域（简单判断左右区域）
+//            int nSplit = rect.left + rect.Width() / 2;
+//            if (pt.x < nSplit && nLoginPos != -1)
+//            {
+//                // 点击"登录"
+//                LoginCamera(nItem);
+//            }
+//            else if (pt.x >= nSplit && nPreviewPos != -1)
+//            {
+//                // 点击"预览"
+//                // OnCameraPreview(nItem);
+//            }
+//        }
+//    }
+//
+//    *pResult = 0;
+//}
 
 void CHikCameraMFCDlg::OnBnClickedBtnBatchLogin()
 {

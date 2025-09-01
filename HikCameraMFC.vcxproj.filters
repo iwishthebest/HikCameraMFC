@@ -33,10 +33,16 @@
     <ClInclude Include="pch.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\PlayM4.h">
+    <ClInclude Include="VideoView.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\CH-HCNetSDKV6.1.9.48\headers\HCNetSDK.h">
+    <ClInclude Include="ControlPanel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="InfoPanel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LogView.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -48,6 +54,18 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoView.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ControlPanel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="InfoPanel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LogView.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

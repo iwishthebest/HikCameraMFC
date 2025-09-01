@@ -3,6 +3,11 @@
 
 #pragma once
 #include <vector>
+#include <afxdockablepane.h>
+#include "VideoView.h"
+#include "ControlPanel.h"
+#include "InfoPanel.h"
+#include "LogView.h"
 
 // 相机信息结构体
 struct CameraInfo
@@ -46,6 +51,24 @@ class CHikCameraMFCDlg : public CDialogEx
   protected:
     HICON m_hIcon;
 
+    // 主分割器
+    CSplitterWnd m_mainSplitter;
+
+    // 右侧面板分割器
+    CSplitterWnd m_rightSplitter;
+
+    // 视图类
+    CVideoView m_videoView;       // 视频显示视图
+    CControlPanel m_controlPanel; // 控制面板
+    CInfoPanel m_infoPanel;       // 信息面板
+    CLogView m_logView;           // 日志视图
+
+    // 状态栏
+    CMFCStatusBar m_statusBar;
+
+    // 工具栏
+    CMFCToolBar m_videoToolBar;
+
     // 生成的消息映射函数
     virtual BOOL OnInitDialog();
     afx_msg void OnSize(UINT nType, int cx, int cy); // 处理最大化 / 最小化
@@ -80,7 +103,7 @@ class CHikCameraMFCDlg : public CDialogEx
     void UpdateCameraStatus(int nIndex, LPCTSTR lpszStatus);
 
     // 字符串转换函数
-    char *ConvertCStringToChar(const CString &str); 
+    char *ConvertCStringToChar(const CString &str);
 
   public:
     afx_msg void OnBnClickedNo();
@@ -91,12 +114,12 @@ class CHikCameraMFCDlg : public CDialogEx
     afx_msg void OnBnClickedBtnLogin();
     afx_msg void OnBnClickedBtnLogout();
     afx_msg void OnLvnItemchangedListCameras(NMHDR *pNMHDR, LRESULT *pResult);
-    void OnNMClickListCameras(NMHDR *pNMHDR, LRESULT *pResult);
     afx_msg void OnBnClickedBtnBatchLogin();
-    bool LoginCamera(int nIndex);
     afx_msg void OnTcnSelchangeTabPreview(NMHDR *pNMHDR, LRESULT *pResult);
     afx_msg void OnLvnItemchangedCameraList(NMHDR *pNMHDR, LRESULT *pResult);
-    void AddCamera(CString ip, int port, CString user, CString pwd);
+    bool LoginCamera(int nIndex);
     void UpdateCameraList();
+    void AddCamera(CString ip, int port, CString user, CString pwd);
+    void OnNMClickListCameras(NMHDR *pNMHDR, LRESULT *pResult);
     CameraInfo *GetSelectedCamera();
 };
