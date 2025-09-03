@@ -236,6 +236,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\HikCameraMFC.ico" />
+    <Image Include="res\camera_placeholder.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

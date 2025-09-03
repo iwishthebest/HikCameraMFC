@@ -51,9 +51,9 @@ END_MESSAGE_MAP()
 
 // 在CHikCameraMFCDlg.cpp的构造函数中初始化（可选，建议初始化）：
 CHikCameraMFCDlg::CHikCameraMFCDlg(CWnd *pParent /*=nullptr*/)
-    : CDialogEx(IDD_MAIN_DIALOG, pParent), m_bInitLayout(false), m_selectedIndex(-1) // 初始化为-1表示未选择
+    : CDialogEx(IDD_HIKCAMERAMFC_DIALOG, pParent), m_bInitLayout(false), m_selectedIndex(-1) // 初始化为-1表示未选择
 {
-    m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+    m_hIcon = AfxGetApp()->LoadIcon(128);
 }
 
 void CHikCameraMFCDlg::DoDataExchange(CDataExchange *pDX) { CDialogEx::DoDataExchange(pDX); }
@@ -166,7 +166,6 @@ END_MESSAGE_MAP()
 //     return TRUE; // 除非将焦点设置到控件，否则返回 TRUE
 // }
 
-// new
 BOOL CHikCameraMFCDlg::OnInitDialog()
 {
     CDialogEx::OnInitDialog();
@@ -175,30 +174,72 @@ BOOL CHikCameraMFCDlg::OnInitDialog()
     SetWindowPos(NULL, 0, 0, 1280, 768, SWP_NOMOVE | SWP_NOZORDER);
 
     // 创建主分割器 (1行2列)
-    m_mainSplitter.CreateStatic(this, 1, 2);
+    if (!m_mainSplitter.CreateStatic(this, 1, 2))
+    {
+        TRACE0("Failed to create main splitter\n");
+        AfxMessageBox(_T("主分割器创建失败！")); // 添加提示
+        return FALSE;
+    }
 
     // 左侧：视频显示区 (70%)
     CRect rect;
     GetClientRect(&rect);
-    m_mainSplitter.CreateView(0, 0, RUNTIME_CLASS(CVideoView), CSize(rect.Width() * 0.7, 0), NULL);
+    CRect viewRect(0, 0, rect.Width() * 0.7, rect.Height() - 174); // 减去状态栏和日志高度
+
+    if (!m_mainSplitter.CreateView(0, 0, RUNTIME_CLASS(CVideoView), viewRect.Size(), NULL))
+    {
+        TRACE0("Failed to create video view\n");
+        return FALSE;
+    }
 
     // 右侧：控制面板和信息面板分割器
-    m_rightSplitter.CreateStatic(&m_mainSplitter, 2, 1, WS_CHILD | WS_VISIBLE, m_mainSplitter.IdFromRowCol(0, 1));
+    if (!m_rightSplitter.CreateStatic(&m_mainSplitter, 2, 1, WS_CHILD | WS_VISIBLE, m_mainSplitter.IdFromRowCol(0, 1)))
+    {
+        TRACE0("Failed to create right splitter\n");
+        return FALSE;
+    }
 
     // 控制面板 (60%高度)
-    m_rightSplitter.CreateView(0, 0, RUNTIME_CLASS(CControlPanel), CSize(0, rect.Height() * 0.6), NULL);
+    CRect controlRect(0, 0, rect.Width() * 0.3, (rect.Height() - 174) * 0.6);
+    if (!m_rightSplitter.CreateView(0, 0, RUNTIME_CLASS(CControlPanel), controlRect.Size(), NULL))
+    {
+        TRACE0("Failed to create control panel\n");
+        return FALSE;
+    }
 
     // 信息面板 (40%高度)
-    m_rightSplitter.CreateView(1, 0, RUNTIME_CLASS(CInfoPanel), CSize(0, 0), NULL);
+    CRect infoRect(0, 0, rect.Width() * 0.3, (rect.Height() - 174) * 0.4);
+    if (!m_rightSplitter.CreateView(1, 0, RUNTIME_CLASS(CInfoPanel), infoRect.Size(), NULL))
+    {
+        TRACE0("Failed to create info panel\n");
+        return FALSE;
+    }
 
     // 创建日志视图 (底部固定高度)
-    m_logView.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | LVS_REPORT,
-                     CRect(0, rect.Height() - 150, rect.Width(), rect.Height()), this, IDC_LOG_VIEW);
+    if (!m_logView.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | LVS_REPORT,
+                          CRect(0, rect.Height() - 150, rect.Width(), rect.Height()), this, IDC_LOG_VIEW))
+    {
+        TRACE0("Failed to create log view\n");
+        return FALSE;
+    }
     m_logView.Initialize();
+
+    // 正确创建状态栏
+    if (!m_statusBar.Create(this, WS_CHILD | WS_VISIBLE | CBRS_BOTTOM, IDC_STATUS_BAR))
+    {
+        TRACE0("Failed to create status bar\n");
+        return FALSE;
+    }
+
+    // 设置状态栏指示器
+    UINT indicators[] = {ID_SEPARATOR, ID_INDICATOR_CAPS, ID_INDICATOR_NUM, 0};
+    m_statusBar.SetIndicators(indicators, sizeof(indicators) / sizeof(UINT));
+
+    // 设置状态栏高度
+    m_statusBar.SetPaneInfo(0, ID_SEPARATOR, SBPS_STRETCH, 0);
 
     return TRUE;
 }
-
 void CHikCameraMFCDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
     if ((nID & 0xFFF0) == IDD_ABOUTBOX)
@@ -285,29 +326,40 @@ void CHikCameraMFCDlg::OnPaint()
 //     }
 // }
 
-// new
 void CHikCameraMFCDlg::OnSize(UINT nType, int cx, int cy)
 {
     CDialogEx::OnSize(nType, cx, cy);
 
     if (nType != SIZE_MINIMIZED && cx > 0 && cy > 0)
     {
-        // 调整主分割器
+        // 计算功能区高度（状态栏+日志视图）
+        const int statusBarHeight = 24;
+        const int logViewHeight = 150;
+        const int functionalHeight = statusBarHeight + logViewHeight;
+
+        // 调整主分割器（视频显示+控制面板区域）
         if (m_mainSplitter.GetSafeHwnd())
         {
-            m_mainSplitter.SetWindowPos(NULL, 0, 0, cx, cy - 150, SWP_NOZORDER);
+            m_mainSplitter.SetWindowPos(NULL, 0, 0, cx, cy - functionalHeight, SWP_NOZORDER);
+            m_mainSplitter.RecalcLayout();
         }
 
         // 调整日志视图
         if (m_logView.GetSafeHwnd())
         {
-            m_logView.SetWindowPos(NULL, 0, cy - 150, cx, 150, SWP_NOZORDER);
+            m_logView.SetWindowPos(NULL, 0, cy - logViewHeight, cx, logViewHeight, SWP_NOZORDER);
         }
 
         // 调整状态栏
         if (m_statusBar.GetSafeHwnd())
         {
-            m_statusBar.SetWindowPos(NULL, 0, cy - 24, cx, 24, SWP_NOZORDER);
+            m_statusBar.SetWindowPos(NULL, 0, cy - functionalHeight, cx, statusBarHeight, SWP_NOZORDER);
+            m_statusBar.UpdateWindow();
+
+            // 更新状态栏内容
+            CString statusText;
+            statusText.Format(_T("就绪 | 分辨率: %dx%d"), cx, cy);
+            m_statusBar.SetPaneText(0, statusText);
         }
     }
 }

@@ -97,8 +97,6 @@ class CHikCameraMFCDlg : public CDialogEx
     bool m_bInitLayout;                               // 标记布局是否已初始化
     CRect m_rectOrigDlg;                              // 对话框初始客户区大小
 
-    // 向列表添加相机
-    void AddCameraToList(LPCTSTR lpszIP, int nPort);
     // 更新列表中相机的状态
     void UpdateCameraStatus(int nIndex, LPCTSTR lpszStatus);
 
@@ -120,6 +118,5 @@ class CHikCameraMFCDlg : public CDialogEx
     bool LoginCamera(int nIndex);
     void UpdateCameraList();
     void AddCamera(CString ip, int port, CString user, CString pwd);
-    void OnNMClickListCameras(NMHDR *pNMHDR, LRESULT *pResult);
     CameraInfo *GetSelectedCamera();
 };

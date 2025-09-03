@@ -83,5 +83,8 @@
     <Image Include="res\HikCameraMFC.ico">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="res\camera_placeholder.ico">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>
