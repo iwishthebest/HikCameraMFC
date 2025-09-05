@@ -198,11 +198,9 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\CH-HCNetSDKV6.1.9.48\headers\HCNetSDK.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="HikCameraMFC.h" />
     <ClInclude Include="HikCameraMFCDlg.h" />
-    <ClInclude Include="include\PlayM4.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />

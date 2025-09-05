@@ -50,8 +50,7 @@ END_MESSAGE_MAP()
 CHikCameraMFCDlg::CHikCameraMFCDlg(CWnd *pParent /*=nullptr*/)
     : CDialogEx(IDD_HIKCAMERAMFC_DIALOG, pParent), m_lUserID(-1), m_lRealHandle(-1),
       m_bIsLoggedIn(false), // 初始化未登录
-      m_lPort(-1),          // 初始化播放端口为无效值
-      m_bInitLayout(false)
+      m_lPort(-1)         // 初始化播放端口为无效值
 {
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -64,14 +63,13 @@ ON_WM_SYSCOMMAND()
 ON_WM_PAINT()
 ON_WM_QUERYDRAGICON()
 
-ON_BN_CLICKED(IDNO, &CHikCameraMFCDlg::OnBnClickedNo)
 // 添加以下行：关联按钮ID和处理函数
 ON_BN_CLICKED(IDC_BTN_START_PREVIEW, &CHikCameraMFCDlg::OnBnClickedStartPreview)
 ON_BN_CLICKED(IDC_BTN_CAPTURE, &CHikCameraMFCDlg::OnBnClickedBtnCapture) // 自动生成的映射
-ON_EN_CHANGE(IDC_EDIT_IP, &CHikCameraMFCDlg::OnEnChangeEditIp)
-ON_STN_CLICKED(IDC_VIDEO_DISPLAY, &CHikCameraMFCDlg::OnStnClickedVideoDisplay)
-ON_BN_CLICKED(IDOK, &CHikCameraMFCDlg::OnBnClickedOk)
-ON_BN_CLICKED(IDCANCEL, &CHikCameraMFCDlg::OnBnClickedCancel)
+
+
+ON_BN_CLICKED(IDC_BTN_EXIT, &CHikCameraMFCDlg::OnBnClickedBtnExit)
+
 ON_BN_CLICKED(IDC_BTN_LOGIN, &CHikCameraMFCDlg::OnBnClickedBtnLogin)
 ON_BN_CLICKED(IDC_BTN_LOGOUT, &CHikCameraMFCDlg::OnBnClickedBtnLogout)
 END_MESSAGE_MAP()
@@ -129,31 +127,8 @@ BOOL CHikCameraMFCDlg::OnInitDialog()
     // TODO: 在此添加额外的初始化代码
     //
     //
-    // 初始化布局变量
-    m_bInitLayout = false;
-    GetClientRect(m_rectOrigDlg); // 记录对话框初始大小
 
-    // 所有需要调整的控件ID（参考Resource.h）
-    UINT arrCtrlIDs[] = {
-        IDC_EDIT_IP,           IDC_EDIT_PORT,   IDC_EDIT_USERNAME, IDC_EDIT_PASSWORD, IDC_VIDEO_DISPLAY,
-        IDC_BTN_START_PREVIEW, IDC_BTN_CAPTURE, IDC_BTN_LOGIN,     IDC_BTN_LOGOUT,    IDC_STATIC1,
-        IDC_STATIC2,           IDC_STATIC3,     IDC_STATIC4,       IDC_STATIC_STATUS, IDC_STATIC_CAPTURE_INFO};
-    int nCtrlCount = sizeof(arrCtrlIDs) / sizeof(UINT);
-
-    // 记录每个控件的初始位置和大小（客户区坐标）
-    for (int i = 0; i < nCtrlCount; i++)
-    {
-        CWnd *pCtrl = GetDlgItem(arrCtrlIDs[i]);
-        if (pCtrl && pCtrl->GetSafeHwnd())
-        {
-            CRect rectCtrl;
-            pCtrl->GetWindowRect(rectCtrl);
-            ScreenToClient(rectCtrl); // 转换为对话框客户区坐标
-            m_mapCtrlOrigRect.SetAt(arrCtrlIDs[i], rectCtrl);
-        }
-    }
-
-    m_bInitLayout = true;
+   
 
     return TRUE; // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -202,45 +177,26 @@ void CHikCameraMFCDlg::OnPaint()
 
 void CHikCameraMFCDlg::OnSize(UINT nType, int cx, int cy)
 {
-    CDialogEx::OnSize(nType, cx, cy);
-
-    // 跳过初始化阶段或窗口最小化的情况
-    if (!m_bInitLayout || nType == SIZE_MINIMIZED)
-        return;
-
-    // 计算宽高缩放比例（相对于初始大小）
-    double dScaleX = (double)cx / m_rectOrigDlg.Width();
-    double dScaleY = (double)cy / m_rectOrigDlg.Height();
-
-    // 遍历所有控件，按比例调整
-    POSITION pos = m_mapCtrlOrigRect.GetStartPosition();
-    while (pos)
+    if (IsIconic()) // 判断是否最小化
     {
-        UINT nCtrlID;
-        CRect rectOrig;
-        m_mapCtrlOrigRect.GetNextAssoc(pos, nCtrlID, rectOrig);
+        CPaintDC dc(this); // 用于绘制的设备上下文
 
-        CWnd *pCtrl = GetDlgItem(nCtrlID);
-        if (pCtrl && pCtrl->GetSafeHwnd())
-        {
-            // 计算新位置和大小（四舍五入）
-            int nNewLeft = (int)(rectOrig.left * dScaleX);
-            int nNewTop = (int)(rectOrig.top * dScaleY);
-            int nNewWidth = (int)(rectOrig.Width() * dScaleX);
-            int nNewHeight = (int)(rectOrig.Height() * dScaleY);
+        SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0); // 擦除背景
 
-            // 特殊处理视频显示区域（让其占更大空间）
-            if (nCtrlID == IDC_VIDEO_DISPLAY)
-            {
-                nNewLeft = 20;         // 左边距20px
-                nNewTop = 20;          // 上边距20px
-                nNewWidth = cx - 40;   // 右边距20px
-                nNewHeight = cy - 120; // 底部预留120px给按钮和状态
-            }
+        // 使图标在工作区矩形中居中
+        int cxIcon = GetSystemMetrics(SM_CXICON);
+        int cyIcon = GetSystemMetrics(SM_CYICON);
+        CRect rect;
+        GetClientRect(&rect);
+        int x = (rect.Width() - cxIcon + 1) / 2;
+        int y = (rect.Height() - cyIcon + 1) / 2;
 
-            // 调整控件位置和大小
-            pCtrl->MoveWindow(nNewLeft, nNewTop, nNewWidth, nNewHeight);
-        }
+        // 绘制图标
+        dc.DrawIcon(x, y, m_hIcon);
+    }
+    else
+    {
+        CDialogEx::OnPaint(); // 非最小化时，调用基类处理
     }
 }
 
@@ -385,7 +341,7 @@ void CHikCameraMFCDlg::OnBnClickedBtnCapture()
 }
 
 // 在对话框关闭时，需要释放 SDK 资源，在对话框类的OnCancel函数（位于HikCameraMFCDlg.cpp）中添加以下代码：
-void CHikCameraMFCDlg::OnCancel()
+void CHikCameraMFCDlg::OnBnClickedBtnExit()
 {
     // 若已登录，先注销
     if (m_bIsLoggedIn)
@@ -414,38 +370,7 @@ void CHikCameraMFCDlg::OnCancel()
     CDialogEx::OnCancel();
 }
 
-void CHikCameraMFCDlg::OnBnClickedNo()
-{
-    // TODO: 在此添加控件通知处理程序代码
-}
 
-void CHikCameraMFCDlg::OnEnChangeEditIp()
-{
-    // TODO:  如果该控件是 RICHEDIT 控件，它将不
-    // 发送此通知，除非重写 CDialogEx::OnInitDialog()
-    // 函数并调用 CRichEditCtrl().SetEventMask()，
-    // 同时将 ENM_CHANGE 标志“或”运算到掩码中。
-
-    // TODO:  在此添加控件通知处理程序代码
-}
-
-void CHikCameraMFCDlg::OnStnClickedVideoDisplay()
-{
-    // TODO: 在此添加控件通知处理程序代码
-}
-
-//
-void CHikCameraMFCDlg::OnBnClickedOk()
-{
-    // TODO: 在此添加控件通知处理程序代码
-    CDialogEx::OnOK();
-}
-
-void CHikCameraMFCDlg::OnBnClickedCancel()
-{
-    // TODO: 在此添加控件通知处理程序代码
-    CDialogEx::OnCancel();
-}
 void CHikCameraMFCDlg::OnBnClickedBtnLogin()
 {
     // TODO: 在此添加控件通知处理程序代码

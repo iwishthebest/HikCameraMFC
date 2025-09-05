@@ -37,7 +37,9 @@ class CHikCameraMFCDlg : public CDialogEx
     afx_msg HCURSOR OnQueryDragIcon();
     afx_msg void OnBnClickedStartPreview(); // "开始预览"按钮的点击事件处理函数
     afx_msg void OnBnClickedBtnCapture();   // 抓图：采集图像
-    afx_msg void OnCancel();                // 添加OnCancel声明
+    afx_msg void OnBnClickedBtnExit();       // 退出程序
+    afx_msg void OnBnClickedBtnLogin();      // 登录
+    afx_msg void OnBnClickedBtnLogout();     // 登出
     DECLARE_MESSAGE_MAP()
 
     // 其他代码...
@@ -53,18 +55,4 @@ class CHikCameraMFCDlg : public CDialogEx
     // 抓图相关
     CString m_strCapturePath; // 保存抓图路径
     CString GetCurrentTimeStr();
-
-    // 控件布局相关
-    CMap<UINT, UINT, CRect, CRect> m_mapCtrlOrigRect; // 存储控件初始位置和大小
-    bool m_bInitLayout;                               // 标记布局是否已初始化
-    CRect m_rectOrigDlg;                              // 对话框初始客户区大小
-
-  public:
-    afx_msg void OnBnClickedNo();
-    afx_msg void OnEnChangeEditIp();
-    afx_msg void OnStnClickedVideoDisplay();
-    afx_msg void OnBnClickedOk();
-    afx_msg void OnBnClickedCancel();
-    afx_msg void OnBnClickedBtnLogin();
-    afx_msg void OnBnClickedBtnLogout();
 };
