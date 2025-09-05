@@ -22,6 +22,14 @@
 #define IDC_BTN_LOGOUT                  1014
 #define IDC_STATIC_STATUS               1015
 #define IDC_STATIC_CAPTURE_INFO         1016
+#define IDC_STATIC_LOGIN_GROUP 1017
+#define IDC_STATIC_VIDEO_GROUP 1018
+#define IDC_STATIC_CONTROL_GROUP 1019
+#define IDC_BTN_STOP_PREVIEW 1020
+#define IDC_BTN_SAVE_IMAGE 1021
+#define IDC_BTN_SETTINGS 1022
+#define IDC_BTN_EXIT 1023
+#define IDC_STATIC_CAPTURE_LABEL 1024
 
 // Next default values for new objects
 // 
