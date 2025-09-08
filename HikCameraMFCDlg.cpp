@@ -72,6 +72,8 @@ ON_BN_CLICKED(IDC_BTN_EXIT, &CHikCameraMFCDlg::OnBnClickedBtnExit)
 
 ON_BN_CLICKED(IDC_BTN_LOGIN, &CHikCameraMFCDlg::OnBnClickedBtnLogin)
 ON_BN_CLICKED(IDC_BTN_LOGOUT, &CHikCameraMFCDlg::OnBnClickedBtnLogout)
+ON_BN_CLICKED(IDC_BTN_STOP_PREVIEW, &CHikCameraMFCDlg::OnBnClickedBtnStopPreview)
+ON_BN_CLICKED(IDC_BTN_SAVE_IMAGE, &CHikCameraMFCDlg::OnBnClickedBtnSaveImage)
 END_MESSAGE_MAP()
 
 // CHikCameraMFCDlg 消息处理程序
@@ -283,7 +285,7 @@ void CHikCameraMFCDlg::OnBnClickedStartPreview()
     }
 }
 
-// 添加 “抓图” 按钮点击事件处理函数，在HikCameraMFCDlg.cpp中实现：
+//
 void CHikCameraMFCDlg::OnBnClickedBtnCapture()
 {
     // 检查登录状态
@@ -470,4 +472,13 @@ CString CHikCameraMFCDlg::GetCurrentTimeStr()
     CTime currentTime = CTime::GetCurrentTime(); // 获取当前系统时间
     // 格式化为"YYYYMMDD_HHMMSS"（避免文件名包含特殊字符）
     return currentTime.Format(_T("%Y%m%d_%H%M%S"));
+}
+void CHikCameraMFCDlg::OnBnClickedBtnStopPreview()
+{
+    // TODO: 在此添加控件通知处理程序代码
+}
+
+void CHikCameraMFCDlg::OnBnClickedBtnSaveImage()
+{
+    // TODO: 在此添加控件通知处理程序代码
 }

@@ -55,4 +55,8 @@ class CHikCameraMFCDlg : public CDialogEx
     // 抓图相关
     CString m_strCapturePath; // 保存抓图路径
     CString GetCurrentTimeStr();
+
+  public:
+    afx_msg void OnBnClickedBtnStopPreview();
+    afx_msg void OnBnClickedBtnSaveImage();
 };
