@@ -59,4 +59,5 @@ class CHikCameraMFCDlg : public CDialogEx
   public:
     afx_msg void OnBnClickedBtnStopPreview();
     afx_msg void OnBnClickedBtnSaveImage();
+    afx_msg void OnStnClickedStatic2();
 };

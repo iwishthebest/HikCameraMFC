@@ -74,6 +74,7 @@ ON_BN_CLICKED(IDC_BTN_LOGIN, &CHikCameraMFCDlg::OnBnClickedBtnLogin)
 ON_BN_CLICKED(IDC_BTN_LOGOUT, &CHikCameraMFCDlg::OnBnClickedBtnLogout)
 ON_BN_CLICKED(IDC_BTN_STOP_PREVIEW, &CHikCameraMFCDlg::OnBnClickedBtnStopPreview)
 ON_BN_CLICKED(IDC_BTN_SAVE_IMAGE, &CHikCameraMFCDlg::OnBnClickedBtnSaveImage)
+ON_STN_CLICKED(IDC_STATIC2, &CHikCameraMFCDlg::OnStnClickedStatic2)
 END_MESSAGE_MAP()
 
 // CHikCameraMFCDlg 消息处理程序
@@ -345,31 +346,43 @@ void CHikCameraMFCDlg::OnBnClickedBtnCapture()
 // 在对话框关闭时，需要释放 SDK 资源，在对话框类的OnCancel函数（位于HikCameraMFCDlg.cpp）中添加以下代码：
 void CHikCameraMFCDlg::OnBnClickedBtnExit()
 {
-    // 若已登录，先注销
-    if (m_bIsLoggedIn)
+
+    // 弹出确认消息框，包含“是”和“否”按钮以及问号图标
+    int nResult = AfxMessageBox(_T("您确定要退出程序吗？"), MB_YESNO | MB_ICONQUESTION);
+
+    // 如果用户点击“是”，则继续关闭流程
+    if (nResult == IDYES)
     {
-        OnBnClickedBtnLogout(); // 调用注销函数
+        // 若已登录，先注销
+        if (m_bIsLoggedIn)
+        {
+            OnBnClickedBtnLogout(); // 调用注销函数
+        }
+        // 停止预览
+        if (m_lRealHandle >= 0)
+        {
+            NET_DVR_StopRealPlay(m_lRealHandle);
+        }
+        // 退出登录
+        if (m_lUserID >= 0)
+        {
+            NET_DVR_Logout(m_lUserID);
+        }
+        // 清理SDK
+        NET_DVR_Cleanup();
+        // 关闭播放库端口（如果使用了播放库）
+        if (m_lPort >= 0)
+        {
+            PlayM4_Stop(m_lPort);
+            PlayM4_CloseStream(m_lPort);
+            PlayM4_FreePort(m_lPort);
+        }
+
+        CDialogEx::OnCancel(); // 调用基类OnCancel，继续关闭操作
     }
-    // 停止预览
-    if (m_lRealHandle >= 0)
-    {
-        NET_DVR_StopRealPlay(m_lRealHandle);
-    }
-    // 退出登录
-    if (m_lUserID >= 0)
-    {
-        NET_DVR_Logout(m_lUserID);
-    }
-    // 清理SDK
-    NET_DVR_Cleanup();
-    // 关闭播放库端口（如果使用了播放库）
-    if (m_lPort >= 0)
-    {
-        PlayM4_Stop(m_lPort);
-        PlayM4_CloseStream(m_lPort);
-        PlayM4_FreePort(m_lPort);
-    }
-    CDialogEx::OnCancel();
+
+    // 如果用户点击“否”，则什么都不做，窗口保持打开状态
+
 }
 
 
@@ -479,6 +492,11 @@ void CHikCameraMFCDlg::OnBnClickedBtnStopPreview()
 }
 
 void CHikCameraMFCDlg::OnBnClickedBtnSaveImage()
+{
+    // TODO: 在此添加控件通知处理程序代码
+}
+
+void CHikCameraMFCDlg::OnStnClickedStatic2()
 {
     // TODO: 在此添加控件通知处理程序代码
 }

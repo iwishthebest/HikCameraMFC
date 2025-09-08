@@ -27,13 +27,11 @@
 #define IDC_STATIC_CONTROL_GROUP        1019
 #define IDC_BTN_STOP_PREVIEW            1020
 #define IDC_BTN_SAVE_IMAGE              1021
-
 #define IDC_BTN_SETTINGS                1022
 #define IDC_BTN_EXIT                    1023
 #define IDC_STATIC_CAPTURE_LABEL        1024
-
-#define IDC_BTN_COLLECT_START 1025
-#define IDC_BTN_COLLECT_STOP 1026
+#define IDC_BTN_COLLECT_START           1025
+#define IDC_BTN_COLLECT_STOP            1026
 
 // Next default values for new objects
 // 
